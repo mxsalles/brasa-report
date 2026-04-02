@@ -1,13 +1,20 @@
 <?php
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Fortify\Features;
+
+beforeEach(function () {
+    if (! Features::enabled(Features::emailVerification())) {
+        $this->markTestSkipped('Email verification is disabled.');
+    }
+});
 
 test('sends verification notification', function () {
     Notification::fake();
 
-    $user = User::factory()->unverified()->create();
+    $user = Usuario::factory()->create();
 
     $this->actingAs($user)
         ->post(route('verification.send'))
@@ -19,7 +26,7 @@ test('sends verification notification', function () {
 test('does not send verification notification if email is verified', function () {
     Notification::fake();
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $this->actingAs($user)
         ->post(route('verification.send'))

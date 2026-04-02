@@ -2,7 +2,6 @@
 
 namespace App\Concerns;
 
-use App\Models\User;
 use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
@@ -12,30 +11,26 @@ trait ProfileValidationRules
      *
      * @return array<string, array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>>
      */
-    protected function profileRules(?int $userId = null): array
+    protected function profileRules(?string $userId = null): array
     {
         return [
-            'name' => $this->nameRules(),
+            'nome' => $this->nomeRules(),
             'email' => $this->emailRules($userId),
         ];
     }
 
     /**
-     * Get the validation rules used to validate user names.
-     *
      * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
      */
-    protected function nameRules(): array
+    protected function nomeRules(): array
     {
-        return ['required', 'string', 'max:255'];
+        return ['required', 'string', 'max:150'];
     }
 
     /**
-     * Get the validation rules used to validate user emails.
-     *
      * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
      */
-    protected function emailRules(?int $userId = null): array
+    protected function emailRules(?string $userId = null): array
     {
         return [
             'required',
@@ -43,8 +38,8 @@ trait ProfileValidationRules
             'email',
             'max:255',
             $userId === null
-                ? Rule::unique(User::class)
-                : Rule::unique(User::class)->ignore($userId),
+                ? Rule::unique('usuarios', 'email')
+                : Rule::unique('usuarios', 'email')->ignore($userId),
         ];
     }
 }

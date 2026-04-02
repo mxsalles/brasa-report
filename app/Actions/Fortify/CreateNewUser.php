@@ -4,8 +4,10 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
-use App\Models\User;
+use App\Enums\FuncaoUsuario;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -17,17 +19,27 @@ class CreateNewUser implements CreatesNewUsers
      *
      * @param  array<string, string>  $input
      */
-    public function create(array $input): User
+    public function create(array $input): Usuario
     {
         Validator::make($input, [
-            ...$this->profileRules(),
+            'name' => $this->nomeRules(),
+            'email' => $this->emailRules(),
+            'cpf' => [
+                'required',
+                'string',
+                'size:11',
+                'regex:/^\d{11}$/',
+                Rule::unique('usuarios', 'cpf'),
+            ],
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
-            'name' => $input['name'],
+        return Usuario::create([
+            'nome' => $input['name'],
             'email' => $input['email'],
-            'password' => $input['password'],
+            'cpf' => $input['cpf'],
+            'senha_hash' => $input['password'],
+            'funcao' => FuncaoUsuario::Brigadista,
         ]);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 
@@ -13,7 +13,7 @@ test('reset password link screen can be rendered', function () {
 test('reset password link can be requested', function () {
     Notification::fake();
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $this->post(route('password.email'), ['email' => $user->email]);
 
@@ -23,7 +23,7 @@ test('reset password link can be requested', function () {
 test('reset password screen can be rendered', function () {
     Notification::fake();
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $this->post(route('password.email'), ['email' => $user->email]);
 
@@ -39,7 +39,7 @@ test('reset password screen can be rendered', function () {
 test('password can be reset with valid token', function () {
     Notification::fake();
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $this->post(route('password.email'), ['email' => $user->email]);
 
@@ -60,7 +60,7 @@ test('password can be reset with valid token', function () {
 });
 
 test('password cannot be reset with invalid token', function () {
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $response = $this->post(route('password.update'), [
         'token' => 'invalid-token',
