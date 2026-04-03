@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('DROP TYPE IF EXISTS funcao_usuario CASCADE');
         DB::statement("CREATE TYPE funcao_usuario AS ENUM ('brigadista', 'gestor', 'admin')");
 
         Schema::create('usuarios', function (Blueprint $table) {

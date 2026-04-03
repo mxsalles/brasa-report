@@ -9,6 +9,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('DROP TYPE IF EXISTS nivel_risco CASCADE');
+        DB::statement('DROP TYPE IF EXISTS status_incendio CASCADE');
         DB::statement("CREATE TYPE nivel_risco AS ENUM ('alto', 'medio', 'baixo')");
         DB::statement("CREATE TYPE status_incendio AS ENUM ('ativo', 'contido', 'resolvido')");
 

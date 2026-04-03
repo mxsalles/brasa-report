@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('DROP TYPE IF EXISTS tipo_alerta CASCADE');
         DB::statement("CREATE TYPE tipo_alerta AS ENUM ('temperatura_alta', 'umidade_baixa', 'fogo_detectado', 'proximidade_local_critico')");
 
         Schema::create('alertas', function (Blueprint $table) {

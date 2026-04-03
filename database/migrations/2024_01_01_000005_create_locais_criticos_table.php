@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('DROP TYPE IF EXISTS tipo_local_critico CASCADE');
         DB::statement("CREATE TYPE tipo_local_critico AS ENUM ('residencia', 'escola', 'infraestrutura')");
 
         Schema::create('locais_criticos', function (Blueprint $table) {

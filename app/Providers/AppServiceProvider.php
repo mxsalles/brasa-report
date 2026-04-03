@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Incendio;
 use App\Models\LeituraMeteorologica;
+use App\Models\Usuario;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Relation::enforceMorphMap([
+            'usuarios' => Usuario::class,
             'incendios' => Incendio::class,
             'leituras_meteorologicas' => LeituraMeteorologica::class,
         ]);
