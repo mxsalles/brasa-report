@@ -130,6 +130,10 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 | ---------------------------------------------- | ---------------------------- |
 | Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`  |
 | Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md` |
+| AuthController | `app/Http/Controllers/AuthController.php` |
+| LoginRequest | `app/Http/Requests/LoginRequest.php` |
+| UsuarioResource | `app/Http/Resources/UsuarioResource.php` |
+| Testes de autenticação | `tests/Feature/Auth/AuthControllerTest.php` |
 
 ---
 
@@ -141,6 +145,18 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 - [ ] Controllers e Form Requests
 - [ ] Integração OpenMeteo
 - [ ] Integração NASA FIRMS
-- [ ] Autenticação e middleware de papéis
+- [x] Autenticação e middleware de papéis (AuthController — Sanctum)
 - [ ] Visualização de mapa (frontend)
 - [ ] Sistema de alertas (push + email)
+
+---
+
+## Controllers implementados
+
+### AuthController
+- `POST /api/auth/login` — público
+- `POST /api/auth/logout` — auth:sanctum
+- `GET  /api/auth/me` — auth:sanctum
+
+Registra log de auditoria em login e logout.
+Token Sanctum stateless. Campos sensíveis nunca expostos nas respostas.
