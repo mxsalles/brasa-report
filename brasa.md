@@ -1,15 +1,16 @@
 # BRASA — Documentação de Contexto
 
 > Leia este arquivo antes de qualquer chat novo relacionado ao projeto.
-> Ele consolida decisões de arquitetura, stack, schema e convenções adotadas pelo time.
+> Ele consolida decisões de arquitetura, stack, schema, convenções e regras de agente.
+> **Não prossiga sem ter lido integralmente.**
 
 ---
 
 ## O que é o Brasa
 
-Sistema de gestão e inteligência preditiva de incêndios florestais no **Pantanal brasileiro**. Desenvolvido por seis estudantes com impacto extensionista real — o sistema apoia brigadas de combate ao fogo, gestores ambientais e comunidades em áreas de risco.
+Sistema de gestão e inteligência preditiva de incêndios florestais no **Pantanal brasileiro**. Desenvolvido por seis estudantes com impacto extensionista real — apoia brigadas de combate ao fogo, gestores ambientais e comunidades em áreas de risco.
 
-**Objetivo central:** reduzir o tempo de resposta a incêndios e mapear áreas de maior risco de ignição, permitindo atuação preventiva em vez de reativa.
+**Objetivo central:** reduzir tempo de resposta a incêndios e mapear áreas de maior risco de ignição, permitindo atuação preventiva em vez de reativa.
 
 ---
 
@@ -28,13 +29,56 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 
 ## Convenções do projeto
 
-- **Idioma dos campos:** português (nomes de tabelas, colunas, enums)
-- **UUIDs:** gerados via `gen_random_uuid()` — nativo do PostgreSQL 13+, sem extensões
-- **Timestamps:** sempre `TIMESTAMPTZ` — nunca `TIMESTAMP` sem timezone (incompatível com Supabase)
+- **Idioma dos campos:** português (tabelas, colunas, enums)
+- **UUIDs:** gerados via `gen_random_uuid()` — nativo PostgreSQL 13+, sem extensões
+- **Timestamps:** sempre `TIMESTAMPTZ` — nunca `TIMESTAMP` sem timezone
 - **Campos `criado_em` e `atualizado_em`:** autogeridos no banco via `DEFAULT NOW()` e trigger
-- **Sem extensões externas:** `uuid-ossp` e `postgis` não são utilizados — coordenadas em `NUMERIC(10,7)`, geometria em WKT (`TEXT`)
+- **Sem extensões externas:** sem `uuid-ossp`, sem `postgis` — coordenadas em `NUMERIC(10,7)`, geometria em WKT (`TEXT`)
 - **Chaves primárias:** sempre `id UUID`
-- **Soft delete:** não adotado — deleção física com `ON DELETE` explícito por tabela
+- **Soft delete:** não adotado — deleção física com `ON DELETE` explícito
+
+---
+
+## Regras de agente
+
+Estas regras aplicam-se a **todo chat de implementação** do projeto, sem exceção.
+
+### Fluxo obrigatório
+
+```
+1. PLANEJAMENTO   → listar arquivos, responsabilidades, dependências
+2. DESENVOLVIMENTO
+3. COBERTURA DE TESTES
+4. REVISÃO
+5. ATUALIZAÇÃO DO BRASA.md
+```
+
+Aguardar aprovação explícita entre Planejamento e Desenvolvimento.
+Não avançar etapas sem conclusão da anterior.
+
+### Regra de escrita única por arquivo
+
+- Cada arquivo é escrito **uma vez**, completo e final.
+- **Não editar o mesmo arquivo mais de uma vez** sem aprovação explícita.
+- Se um problema for identificado após a escrita: **descrever em texto e aguardar instrução** — não corrigir autonomamente.
+- Sem loops de autocorreção. Sem refatorações não solicitadas.
+
+### Suite de testes
+
+Ao final de cada implementação, **rodar a suite de testes completa** — não apenas os testes do arquivo recém-criado.
+
+```bash
+php artisan test
+```
+
+Reportar: quantos passaram, quantos falharam, quais falharam e por quê.
+Não encerrar a etapa de revisão com testes quebrados.
+
+### Escopo de cada chat
+
+- Um controller por chat. Contexto limpo por tarefa.
+- Não implementar além do escopo definido no prompt.
+- Não abrir refatorações de arquivos existentes salvo instrução explícita.
 
 ---
 
@@ -50,7 +94,7 @@ Registro de incêndios, despacho de brigadas, importação de dados meteorológi
 
 ### Módulo 3 — Relatórios e Inteligência
 
-Análise histórica, tempo de resposta, zonas de risco. _(Relatórios são gerados no client — sem tabela de relatórios no banco.)_
+Análise histórica, tempo de resposta, zonas de risco. _(Relatórios gerados no client — sem tabela de relatórios no banco.)_
 
 ---
 
@@ -112,13 +156,13 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 
 ### Decisões de design relevantes
 
-**`alertas` é polimórfica sem FKs** — intencional. Os campos `origem_id (UUID)` + `origem_tabela (VARCHAR)` identificam a origem do alerta. O Eloquent gerencia via `morphTo`/`morphMany`. Não adicionar FKs nessa tabela.
+**`alertas` é polimórfica sem FKs** — intencional. `origem_id` + `origem_tabela` identificam a origem. Eloquent via `morphTo`/`morphMany`. Não adicionar FKs nessa tabela.
 
-**`leituras_meteorologicas` vinculada ao incêndio** — ao registrar um incêndio, as condições climáticas do momento são atreladas via `incendio_id`. A tabela não se relaciona com `areas_monitoradas`.
+**`leituras_meteorologicas` vinculada ao incêndio** — condições climáticas atreladas via `incendio_id` no momento do registro. Sem relação com `areas_monitoradas`.
 
-**`locais_criticos` é independente** — cadastrada previamente, associada opcionalmente ao incêndio via `local_critico_id` em `incendios`. Cálculo de distância feito no client.
+**`locais_criticos` é independente** — associada opcionalmente ao incêndio via `local_critico_id` em `incendios`. Cálculo de distância feito no client.
 
-**`despachos_brigada` tem CHECK de timeline** — banco garante `despachado_em ≤ chegada_em ≤ finalizado_em`. O campo `finalizado_em` registra o encerramento do combate.
+**`despachos_brigada` tem CHECK de timeline** — banco garante `despachado_em ≤ chegada_em ≤ finalizado_em`. `finalizado_em` registra encerramento do combate.
 
 **Sem tabela de relatórios** — geração de PDF/CSV é responsabilidade do client.
 
@@ -126,14 +170,20 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 
 ## O que já foi produzido
 
-| Artefato                                       | Arquivo                      |
-| ---------------------------------------------- | ---------------------------- |
-| Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`  |
-| Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md` |
-| AuthController | `app/Http/Controllers/AuthController.php` |
-| LoginRequest | `app/Http/Requests/LoginRequest.php` |
-| UsuarioResource | `app/Http/Resources/UsuarioResource.php` |
-| Testes de autenticação | `tests/Feature/Auth/AuthControllerTest.php` |
+| Artefato                                       | Arquivo                                     |
+| ---------------------------------------------- | ------------------------------------------- |
+| Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`                 |
+| Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md`                |
+| Prompt para geração de Models Eloquent         | `prompt_models_brasa.md`                    |
+| AuthController                                 | `app/Http/Controllers/AuthController.php`   |
+| LoginRequest                                   | `app/Http/Requests/LoginRequest.php`        |
+| UsuarioResource                                | `app/Http/Resources/UsuarioResource.php`    |
+| Testes de autenticação                         | `tests/Feature/Auth/AuthControllerTest.php` |
+| PasswordResetController                        | `app/Http/Controllers/Auth/PasswordResetController.php` |
+| EsqueciSenhaRequest                            | `app/Http/Requests/Auth/EsqueciSenhaRequest.php` |
+| RedefinirSenhaRequest                          | `app/Http/Requests/Auth/RedefinirSenhaRequest.php` |
+| RecuperacaoSenhaMail                           | `app/Mail/RecuperacaoSenhaMail.php` |
+| Testes de recuperação de senha                 | `tests/Feature/Auth/PasswordResetControllerTest.php` |
 
 ---
 
@@ -142,21 +192,51 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 - [ ] Migrations Laravel (geradas a partir do `prompt_migrations_brasa.md`)
 - [ ] Models Eloquent com relacionamentos
 - [ ] Seeders de desenvolvimento
-- [ ] Controllers e Form Requests
+- [ ] Controllers e Form Requests (ver sequência abaixo)
 - [ ] Integração OpenMeteo
 - [ ] Integração NASA FIRMS
-- [x] Autenticação e middleware de papéis (AuthController — Sanctum)
+- [x] Autenticação — AuthController (Sanctum)
+- [x] Recuperação de senha — PasswordResetController
 - [ ] Visualização de mapa (frontend)
 - [ ] Sistema de alertas (push + email)
+
+---
+
+## Sequência de controllers
+
+| Ordem | Controller                       | Grupo | Depende de                                                      |
+| ----- | -------------------------------- | ----- | --------------------------------------------------------------- |
+| 1     | `AuthController`                 | 1     | —                                                               |
+| 2     | `PasswordResetController`        | 1     | `TokenRecuperacaoSenha`, `Usuario`                              |
+| 3     | `BrigadaController`              | 1     | —                                                               |
+| 4     | `AreaMonitoradaController`       | 1     | —                                                               |
+| 5     | `LocalCriticoController`         | 1     | —                                                               |
+| 6     | `UsuarioController`              | 2     | `Brigada`                                                       |
+| 7     | `DeteccaoSateliteController`     | 2     | —                                                               |
+| 8     | `IncendioController`             | 3     | `Usuario`, `AreaMonitorada`, `LocalCritico`, `DeteccaoSatelite` |
+| 9     | `LeituraMeteorologicaController` | 3     | `Incendio`                                                      |
+| 10    | `DespachoBrigadaController`      | 4     | `Incendio`, `Brigada`                                           |
+| 11    | `AlertaController`               | 4     | — (somente leitura + patch)                                     |
+| 12    | `LogAuditoriaController`         | 4     | — (somente leitura, admin only)                                 |
 
 ---
 
 ## Controllers implementados
 
 ### AuthController
+
 - `POST /api/auth/login` — público
 - `POST /api/auth/logout` — auth:sanctum
 - `GET  /api/auth/me` — auth:sanctum
 
 Registra log de auditoria em login e logout.
 Token Sanctum stateless. Campos sensíveis nunca expostos nas respostas.
+
+### PasswordResetController
+
+- `POST /api/auth/senha/esqueci`   — público
+- `POST /api/auth/senha/redefinir` — público
+
+Fluxo stateless sem Sanctum. Token expira em 30 min.
+Email enfileirado — não bloqueia resposta. Resposta sempre 200 em `esqueci`
+para não revelar existência de conta. Todos os tokens Sanctum revogados após reset.
