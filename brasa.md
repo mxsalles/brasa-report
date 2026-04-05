@@ -18,7 +18,7 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 
 | Camada            | Tecnologia                     |
 | ----------------- | ------------------------------ |
-| Backend           | PHP + Laravel 11               |
+| Backend           | PHP + Laravel 12               |
 | Frontend          | ReactJS + Inertia.js           |
 | Banco de dados    | PostgreSQL via Supabase        |
 | API meteorológica | OpenMeteo                      |
@@ -170,20 +170,20 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 
 ## O que já foi produzido
 
-| Artefato                                       | Arquivo                                     |
-| ---------------------------------------------- | ------------------------------------------- |
-| Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`                 |
-| Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md`                |
-| Prompt para geração de Models Eloquent         | `prompt_models_brasa.md`                    |
-| AuthController                                 | `app/Http/Controllers/AuthController.php`   |
-| LoginRequest                                   | `app/Http/Requests/LoginRequest.php`        |
-| UsuarioResource                                | `app/Http/Resources/UsuarioResource.php`    |
-| Testes de autenticação                         | `tests/Feature/Auth/AuthControllerTest.php` |
+| Artefato                                       | Arquivo                                                 |
+| ---------------------------------------------- | ------------------------------------------------------- |
+| Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`                             |
+| Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md`                            |
+| Prompt para geração de Models Eloquent         | `prompt_models_brasa.md`                                |
+| AuthController                                 | `app/Http/Controllers/AuthController.php`               |
+| LoginRequest                                   | `app/Http/Requests/LoginRequest.php`                    |
+| UsuarioResource                                | `app/Http/Resources/UsuarioResource.php`                |
+| Testes de autenticação                         | `tests/Feature/Auth/AuthControllerTest.php`             |
 | PasswordResetController                        | `app/Http/Controllers/Auth/PasswordResetController.php` |
-| EsqueciSenhaRequest                            | `app/Http/Requests/Auth/EsqueciSenhaRequest.php` |
-| RedefinirSenhaRequest                          | `app/Http/Requests/Auth/RedefinirSenhaRequest.php` |
-| RecuperacaoSenhaMail                           | `app/Mail/RecuperacaoSenhaMail.php` |
-| Testes de recuperação de senha                 | `tests/Feature/Auth/PasswordResetControllerTest.php` |
+| EsqueciSenhaRequest                            | `app/Http/Requests/Auth/EsqueciSenhaRequest.php`        |
+| RedefinirSenhaRequest                          | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`      |
+| RecuperacaoSenhaMail                           | `app/Mail/RecuperacaoSenhaMail.php`                     |
+| Testes de recuperação de senha                 | `tests/Feature/Auth/PasswordResetControllerTest.php`    |
 
 ---
 
@@ -234,7 +234,7 @@ Token Sanctum stateless. Campos sensíveis nunca expostos nas respostas.
 
 ### PasswordResetController
 
-- `POST /api/auth/senha/esqueci`   — público
+- `POST /api/auth/senha/esqueci` — público
 - `POST /api/auth/senha/redefinir` — público
 
 Fluxo stateless sem Sanctum. Token expira em 30 min.
