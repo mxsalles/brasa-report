@@ -238,6 +238,12 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | LocalCriticoResource               | `app/Http/Resources/LocalCriticoResource.php`                      | —                                                     |
 | LocalCriticoFactory                | `database/factories/LocalCriticoFactory.php`                       | —                                                     |
 | Testes de local crítico            | `tests/Feature/LocalCriticoControllerTest.php`                     | —                                                     |
+| UsuarioController                  | `app/Http/Controllers/UsuarioController.php`                       | —                                                     |
+| StoreUsuarioRequest                | `app/Http/Requests/Usuario/StoreUsuarioRequest.php`                | —                                                     |
+| UpdateUsuarioRequest               | `app/Http/Requests/Usuario/UpdateUsuarioRequest.php`               | —                                                     |
+| AtualizarFuncaoRequest             | `app/Http/Requests/Usuario/AtualizarFuncaoRequest.php`             | —                                                     |
+| AtualizarBrigadaRequest            | `app/Http/Requests/Usuario/AtualizarBrigadaRequest.php`            | —                                                     |
+| Testes de usuário                  | `tests/Feature/UsuarioControllerTest.php`                          | —                                                     |
 
 
 ---
@@ -249,7 +255,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - BrigadaController — CRUD + atualização de localização
 - AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
 - LocalCriticoController — CRUD
-- UsuarioController
+- [x] UsuarioController — CRUD + atualizarFuncao + atualizarBrigada
 - DeteccaoSateliteController
 - IncendioController
 - LeituraMeteorologicaController
@@ -349,6 +355,24 @@ Bloqueia remoção de local com incêndios vinculados (409).
 Filtros por tipo e nome em index.
 Cálculo de distância é responsabilidade do client — não implementado no backend.
 Log de auditoria em criação, atualização e remoção.
+Controle de papel via middleware — pendente implementação do middleware de papéis.
+
+### UsuarioController
+
+- `GET    /api/usuarios`                    — auth:sanctum (admin)
+- `POST   /api/usuarios`                    — auth:sanctum (admin)
+- `GET    /api/usuarios/{usuario}`          — auth:sanctum (admin)
+- `PUT    /api/usuarios/{usuario}`          — auth:sanctum (admin)
+- `DELETE /api/usuarios/{usuario}`          — auth:sanctum (admin)
+- `PATCH  /api/usuarios/{usuario}/funcao`   — auth:sanctum (admin)
+- `PATCH  /api/usuarios/{usuario}/brigada`  — auth:sanctum (admin, gestor)
+
+Bloqueia remoção do próprio usuário autenticado (403).
+Bloqueia remoção de usuário com incêndios vinculados (409).
+Bloqueia alteração da própria função (403).
+Tokens Sanctum revogados antes da remoção.
+senha_hash e cpf nunca expostos. UsuarioResource em modo completo.
+Log de auditoria em criação, atualização, remoção, mudança de função e brigada.
 Controle de papel via middleware — pendente implementação do middleware de papéis.
 
 ---

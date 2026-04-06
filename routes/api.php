@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
 use App\Http\Controllers\LocalCriticoController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -50,4 +51,19 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::put('/locais-criticos/{local}', [LocalCriticoController::class, 'update']);
     // Papéis futuros: admin
     Route::delete('/locais-criticos/{local}', [LocalCriticoController::class, 'destroy']);
+
+    // Papéis futuros: admin
+    Route::get('/usuarios', [UsuarioController::class, 'index']);
+    // Papéis futuros: admin
+    Route::post('/usuarios', [UsuarioController::class, 'store']);
+    // Papéis futuros: admin
+    Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
+    // Papéis futuros: admin
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
+    // Papéis futuros: admin
+    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
+    // Papéis futuros: admin
+    Route::patch('/usuarios/{usuario}/funcao', [UsuarioController::class, 'atualizarFuncao']);
+    // Papéis futuros: admin, gestor
+    Route::patch('/usuarios/{usuario}/brigada', [UsuarioController::class, 'atualizarBrigada']);
 });
