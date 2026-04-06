@@ -184,11 +184,18 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 | RedefinirSenhaRequest                          | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`      |
 | RecuperacaoSenhaMail                           | `app/Mail/RecuperacaoSenhaMail.php`                     |
 | Testes de recuperação de senha                 | `tests/Feature/Auth/PasswordResetControllerTest.php`    |
+| BrigadaController                              | `app/Http/Controllers/BrigadaController.php`            |
+| StoreBrigadaRequest                            | `app/Http/Requests/Brigada/StoreBrigadaRequest.php`      |
+| UpdateBrigadaRequest                           | `app/Http/Requests/Brigada/UpdateBrigadaRequest.php`     |
+| AtualizarLocalizacaoBrigadaRequest             | `app/Http/Requests/Brigada/AtualizarLocalizacaoBrigadaRequest.php` |
+| BrigadaResource                                | `app/Http/Resources/BrigadaResource.php`                |
+| Testes de brigada                              | `tests/Feature/BrigadaControllerTest.php`             |
 
 ---
 
 ## O que ainda precisa ser feito
 
+- [x] BrigadaController — CRUD + atualização de localização
 - [ ] Migrations Laravel (geradas a partir do `prompt_migrations_brasa.md`)
 - [ ] Models Eloquent com relacionamentos
 - [ ] Seeders de desenvolvimento
@@ -240,3 +247,16 @@ Token Sanctum stateless. Campos sensíveis nunca expostos nas respostas.
 Fluxo stateless sem Sanctum. Token expira em 30 min.
 Email enfileirado — não bloqueia resposta. Resposta sempre 200 em `esqueci`
 para não revelar existência de conta. Todos os tokens Sanctum revogados após reset.
+
+### BrigadaController
+
+- `GET    /api/brigadas`                       — auth:sanctum (gestor, admin)
+- `POST   /api/brigadas`                       — auth:sanctum (admin)
+- `GET    /api/brigadas/{brigada}`             — auth:sanctum (gestor, admin)
+- `PUT    /api/brigadas/{brigada}`             — auth:sanctum (admin)
+- `DELETE /api/brigadas/{brigada}`             — auth:sanctum (admin)
+- `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, admin)
+
+Bloqueia remoção de brigada com membros vinculados (409).
+Log de auditoria em criação, atualização, remoção e atualização de localização.
+Controle de papel via middleware — pendente implementação do middleware de papéis.

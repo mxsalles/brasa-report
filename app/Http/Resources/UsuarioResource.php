@@ -11,11 +11,26 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class UsuarioResource extends JsonResource
 {
+    public function __construct(
+        $resource,
+        protected bool $somenteMembroBrigada = false,
+    ) {
+        parent::__construct($resource);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
+        if ($this->somenteMembroBrigada) {
+            return [
+                'id' => $this->id,
+                'nome' => $this->nome,
+                'funcao' => $this->funcao->value,
+            ];
+        }
+
         return [
             'id' => $this->id,
             'nome' => $this->nome,
