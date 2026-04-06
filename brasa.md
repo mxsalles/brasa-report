@@ -228,6 +228,11 @@ Quando for pago o débito técnico, auditar todos os Models e garantir uniformid
 | AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                    | —                                                     |
 | GeoPackageService                  | `app/Services/GeoPackageService.php`                               | —                                                     |
 | Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                   | —                                                     |
+| LocalCriticoController             | `app/Http/Controllers/LocalCriticoController.php`                  | —                                                     |
+| StoreLocalCriticoRequest           | `app/Http/Requests/LocalCritico/StoreLocalCriticoRequest.php`      | —                                                     |
+| UpdateLocalCriticoRequest          | `app/Http/Requests/LocalCritico/UpdateLocalCriticoRequest.php`     | —                                                     |
+| LocalCriticoResource               | `app/Http/Resources/LocalCriticoResource.php`                      | —                                                     |
+| Testes de local crítico            | `tests/Feature/LocalCriticoControllerTest.php`                     | —                                                     |
 
 ---
 
@@ -237,7 +242,7 @@ Quando for pago o débito técnico, auditar todos os Models e garantir uniformid
 - [x] Recuperação de senha — PasswordResetController
 - [x] BrigadaController — CRUD + atualização de localização
 - [x] AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
-- [ ] LocalCriticoController
+- [x] LocalCriticoController
 - [ ] UsuarioController
 - [ ] DeteccaoSateliteController
 - [ ] IncendioController
@@ -322,6 +327,21 @@ Bloqueia remoção de área com incêndios vinculados (409).
 Arquivo removido do storage junto com o registro.
 Log de auditoria em criação, atualização e remoção.
 Conversão WKB→WKT pendente como dívida técnica.
+
+### LocalCriticoController
+
+- `GET    /api/locais-criticos`         — auth:sanctum (gestor, admin)
+- `POST   /api/locais-criticos`         — auth:sanctum (admin)
+- `GET    /api/locais-criticos/{local}` — auth:sanctum (gestor, admin)
+- `PUT    /api/locais-criticos/{local}` — auth:sanctum (admin)
+- `DELETE /api/locais-criticos/{local}` — auth:sanctum (admin)
+
+Tabela independente — sem FK de saída.
+Bloqueia remoção de local com incêndios vinculados (409).
+Filtros por tipo e nome em index.
+Cálculo de distância é responsabilidade do client — não implementado no backend.
+Log de auditoria em criação, atualização e remoção.
+Controle de papel via middleware — pendente implementação do middleware de papéis.
 
 ---
 

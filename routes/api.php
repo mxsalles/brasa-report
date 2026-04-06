@@ -4,6 +4,7 @@ use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
+use App\Http\Controllers\LocalCriticoController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -38,4 +39,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::put('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'update']);
     // Papéis futuros: admin
     Route::delete('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'destroy']);
+
+    // Papéis futuros: gestor, admin
+    Route::get('/locais-criticos', [LocalCriticoController::class, 'index']);
+    // Papéis futuros: admin
+    Route::post('/locais-criticos', [LocalCriticoController::class, 'store']);
+    // Papéis futuros: gestor, admin
+    Route::get('/locais-criticos/{local}', [LocalCriticoController::class, 'show']);
+    // Papéis futuros: admin
+    Route::put('/locais-criticos/{local}', [LocalCriticoController::class, 'update']);
+    // Papéis futuros: admin
+    Route::delete('/locais-criticos/{local}', [LocalCriticoController::class, 'destroy']);
 });
