@@ -190,6 +190,16 @@ Modo restrito é exclusivo para contextos de listagem aninhada — evita vazar `
 
 ---
 
+## Models — padrão HasUuids
+
+`HasUuids` foi adicionado pontualmente em `Brigada` e `AreaMonitorada` durante a implementação dos controllers.
+
+**Regra para chats futuros:** ao criar ou tocar qualquer Model, verificar se `HasUuids` está presente. Se não estiver — adicionar. Não tratar como escopo expandido. É correção de consistência.
+
+Quando for pago o débito técnico, auditar todos os Models e garantir uniformidade.
+
+---
+
 ## O que já foi produzido
 
 | Artefato                           | Arquivo                                                            | Versão atual                                          |
@@ -213,9 +223,9 @@ Modo restrito é exclusivo para contextos de listagem aninhada — evita vazar `
 | BrigadaResource                    | `app/Http/Resources/BrigadaResource.php`                           | —                                                     |
 | Testes de brigada                  | `tests/Feature/BrigadaControllerTest.php`                          | —                                                     |
 | AreaMonitoradaController           | `app/Http/Controllers/AreaMonitoradaController.php`                | —                                                     |
-| StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`    | —                                                     |
-| UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php`   | —                                                     |
-| AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                      | —                                                     |
+| StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`  | —                                                     |
+| UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php` | —                                                     |
+| AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                    | —                                                     |
 | GeoPackageService                  | `app/Services/GeoPackageService.php`                               | —                                                     |
 | Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                   | —                                                     |
 
@@ -313,9 +323,13 @@ Arquivo removido do storage junto com o registro.
 Log de auditoria em criação, atualização e remoção.
 Conversão WKB→WKT pendente como dívida técnica.
 
+---
+
 ## Dívida técnica
 
-| Item | Localização | Descrição |
-| --- | --- | --- |
-| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php` | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers. |
-| Conversão WKB→WKT | `app/Services/GeoPackageService.php` | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente. |
+| Item                                           | Localização                                                       | Descrição                                                                                                                                        |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.            |
+| Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                        |
+| `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito. |
+| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Adicionado pontualmente em `Brigada` e `AreaMonitorada`. Demais Models não auditados. Uniformizar na sprint de débito.                           |
