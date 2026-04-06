@@ -168,42 +168,78 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 
 ---
 
+## Resources e comportamentos especiais
+
+### UsuarioResource — modo restrito
+
+`UsuarioResource` aceita um segundo argumento opcional `$somenteMembroBrigada` (boolean).
+
+```php
+// modo completo (padrão) — usado em AuthController e UsuarioController
+new UsuarioResource($usuario)
+// → expõe: id, nome, email, funcao, brigada_id, criado_em
+
+// modo restrito — usado em BrigadaResource ao listar membros
+new UsuarioResource($usuario, true)
+// → expõe apenas: id, nome, funcao
+```
+
+**Regra:** qualquer controller que instanciar `UsuarioResource` deve declarar explicitamente qual modo usa.
+Modo completo não expõe `senha_hash` nem `cpf` em nenhuma circunstância.
+Modo restrito é exclusivo para contextos de listagem aninhada — evita vazar `email` em respostas de brigada.
+
+---
+
 ## O que já foi produzido
 
-| Artefato                                       | Arquivo                                                 |
-| ---------------------------------------------- | ------------------------------------------------------- |
-| Schema DDL PostgreSQL final                    | `brasa_schema_postgres.sql`                             |
-| Prompt para geração de migrations (Laravel 11) | `prompt_migrations_brasa.md`                            |
-| Prompt para geração de Models Eloquent         | `prompt_models_brasa.md`                                |
-| AuthController                                 | `app/Http/Controllers/AuthController.php`               |
-| LoginRequest                                   | `app/Http/Requests/LoginRequest.php`                    |
-| UsuarioResource                                | `app/Http/Resources/UsuarioResource.php`                |
-| Testes de autenticação                         | `tests/Feature/Auth/AuthControllerTest.php`             |
-| PasswordResetController                        | `app/Http/Controllers/Auth/PasswordResetController.php` |
-| EsqueciSenhaRequest                            | `app/Http/Requests/Auth/EsqueciSenhaRequest.php`        |
-| RedefinirSenhaRequest                          | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`      |
-| RecuperacaoSenhaMail                           | `app/Mail/RecuperacaoSenhaMail.php`                     |
-| Testes de recuperação de senha                 | `tests/Feature/Auth/PasswordResetControllerTest.php`    |
-| BrigadaController                              | `app/Http/Controllers/BrigadaController.php`            |
-| StoreBrigadaRequest                            | `app/Http/Requests/Brigada/StoreBrigadaRequest.php`      |
-| UpdateBrigadaRequest                           | `app/Http/Requests/Brigada/UpdateBrigadaRequest.php`     |
-| AtualizarLocalizacaoBrigadaRequest             | `app/Http/Requests/Brigada/AtualizarLocalizacaoBrigadaRequest.php` |
-| BrigadaResource                                | `app/Http/Resources/BrigadaResource.php`                |
-| Testes de brigada                              | `tests/Feature/BrigadaControllerTest.php`             |
+| Artefato                           | Arquivo                                                            | Versão atual                                          |
+| ---------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| Schema DDL PostgreSQL final        | `brasa_schema_postgres.sql`                                        | —                                                     |
+| Prompt migrations (Laravel 12)     | `prompt_migrations_brasa.md`                                       | —                                                     |
+| Prompt Models Eloquent             | `prompt_models_brasa.md`                                           | —                                                     |
+| AuthController                     | `app/Http/Controllers/AuthController.php`                          | —                                                     |
+| LoginRequest                       | `app/Http/Requests/LoginRequest.php`                               | —                                                     |
+| UsuarioResource                    | `app/Http/Resources/UsuarioResource.php`                           | modificado no BrigadaController — ver seção Resources |
+| Testes de autenticação             | `tests/Feature/Auth/AuthControllerTest.php`                        | —                                                     |
+| PasswordResetController            | `app/Http/Controllers/Auth/PasswordResetController.php`            | —                                                     |
+| EsqueciSenhaRequest                | `app/Http/Requests/Auth/EsqueciSenhaRequest.php`                   | —                                                     |
+| RedefinirSenhaRequest              | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`                 | —                                                     |
+| RecuperacaoSenhaMail               | `app/Mail/RecuperacaoSenhaMail.php`                                | —                                                     |
+| Testes de recuperação de senha     | `tests/Feature/Auth/PasswordResetControllerTest.php`               | —                                                     |
+| BrigadaController                  | `app/Http/Controllers/BrigadaController.php`                       | —                                                     |
+| StoreBrigadaRequest                | `app/Http/Requests/Brigada/StoreBrigadaRequest.php`                | —                                                     |
+| UpdateBrigadaRequest               | `app/Http/Requests/Brigada/UpdateBrigadaRequest.php`               | —                                                     |
+| AtualizarLocalizacaoBrigadaRequest | `app/Http/Requests/Brigada/AtualizarLocalizacaoBrigadaRequest.php` | —                                                     |
+| BrigadaResource                    | `app/Http/Resources/BrigadaResource.php`                           | —                                                     |
+| Testes de brigada                  | `tests/Feature/BrigadaControllerTest.php`                          | —                                                     |
+| AreaMonitoradaController           | `app/Http/Controllers/AreaMonitoradaController.php`                | —                                                     |
+| StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`    | —                                                     |
+| UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php`   | —                                                     |
+| AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                      | —                                                     |
+| GeoPackageService                  | `app/Services/GeoPackageService.php`                               | —                                                     |
+| Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                   | —                                                     |
 
 ---
 
 ## O que ainda precisa ser feito
 
-- [x] BrigadaController — CRUD + atualização de localização
-- [ ] Migrations Laravel (geradas a partir do `prompt_migrations_brasa.md`)
-- [ ] Models Eloquent com relacionamentos
-- [ ] Seeders de desenvolvimento
-- [ ] Controllers e Form Requests (ver sequência abaixo)
-- [ ] Integração OpenMeteo
-- [ ] Integração NASA FIRMS
 - [x] Autenticação — AuthController (Sanctum)
 - [x] Recuperação de senha — PasswordResetController
+- [x] BrigadaController — CRUD + atualização de localização
+- [x] AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
+- [ ] LocalCriticoController
+- [ ] UsuarioController
+- [ ] DeteccaoSateliteController
+- [ ] IncendioController
+- [ ] LeituraMeteorologicaController
+- [ ] DespachoBrigadaController
+- [ ] AlertaController
+- [ ] LogAuditoriaController
+- [ ] Migrations Laravel
+- [ ] Models Eloquent com relacionamentos
+- [ ] Seeders de desenvolvimento
+- [ ] Integração OpenMeteo
+- [ ] Integração NASA FIRMS
 - [ ] Visualização de mapa (frontend)
 - [ ] Sistema de alertas (push + email)
 
@@ -250,13 +286,36 @@ para não revelar existência de conta. Todos os tokens Sanctum revogados após 
 
 ### BrigadaController
 
-- `GET    /api/brigadas`                       — auth:sanctum (gestor, admin)
-- `POST   /api/brigadas`                       — auth:sanctum (admin)
-- `GET    /api/brigadas/{brigada}`             — auth:sanctum (gestor, admin)
-- `PUT    /api/brigadas/{brigada}`             — auth:sanctum (admin)
-- `DELETE /api/brigadas/{brigada}`             — auth:sanctum (admin)
+- `GET    /api/brigadas` — auth:sanctum (gestor, admin)
+- `POST   /api/brigadas` — auth:sanctum (admin)
+- `GET    /api/brigadas/{brigada}` — auth:sanctum (gestor, admin)
+- `PUT    /api/brigadas/{brigada}` — auth:sanctum (admin)
+- `DELETE /api/brigadas/{brigada}` — auth:sanctum (admin)
 - `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, admin)
 
 Bloqueia remoção de brigada com membros vinculados (409).
 Log de auditoria em criação, atualização, remoção e atualização de localização.
 Controle de papel via middleware — pendente implementação do middleware de papéis.
+Membros listados via `UsuarioResource` em modo restrito (`$somenteMembroBrigada = true`).
+
+### AreaMonitoradaController
+
+- `GET    /api/areas-monitoradas` — auth:sanctum (gestor, admin)
+- `POST   /api/areas-monitoradas` — auth:sanctum (admin)
+- `GET    /api/areas-monitoradas/{area}` — auth:sanctum (gestor, admin)
+- `PUT    /api/areas-monitoradas/{area}` — auth:sanctum (admin)
+- `DELETE /api/areas-monitoradas/{area}` — auth:sanctum (admin)
+
+Importação de GeoPackage via PDO/SQLite (MVP síncrono — sem Job).
+Geometria armazenada como WKT em TEXT — sem PostGIS.
+Bloqueia remoção de área com incêndios vinculados (409).
+Arquivo removido do storage junto com o registro.
+Log de auditoria em criação, atualização e remoção.
+Conversão WKB→WKT pendente como dívida técnica.
+
+## Dívida técnica
+
+| Item | Localização | Descrição |
+| --- | --- | --- |
+| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php` | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers. |
+| Conversão WKB→WKT | `app/Services/GeoPackageService.php` | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente. |

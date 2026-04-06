@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
@@ -26,4 +27,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
     // Papéis futuros: brigadista, gestor, admin
     Route::patch('/brigadas/{brigada}/localizacao', [BrigadaController::class, 'atualizarLocalizacao']);
+
+    // Papéis futuros: gestor, admin
+    Route::get('/areas-monitoradas', [AreaMonitoradaController::class, 'index']);
+    // Papéis futuros: admin
+    Route::post('/areas-monitoradas', [AreaMonitoradaController::class, 'store']);
+    // Papéis futuros: gestor, admin
+    Route::get('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'show']);
+    // Papéis futuros: admin
+    Route::put('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'update']);
+    // Papéis futuros: admin
+    Route::delete('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'destroy']);
 });
