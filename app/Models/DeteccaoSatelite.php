@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use Database\Factories\DeteccaoSateliteFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DeteccaoSatelite extends Model
 {
+    /** @use HasFactory<DeteccaoSateliteFactory> */
+    use HasFactory, HasUuids;
+
     protected $table = 'deteccoes_satelite';
 
     public $timestamps = false;

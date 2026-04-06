@@ -192,7 +192,7 @@ Modo restrito é exclusivo para contextos de listagem aninhada — evita vazar `
 
 ## Models — padrão HasUuids
 
-`HasUuids` confirmado em: `Brigada`, `AreaMonitorada`, `LocalCritico`.
+`HasUuids` confirmado em: `Brigada`, `AreaMonitorada`, `LocalCritico`, `DeteccaoSatelite`.
 Demais Models não auditados — uniformizar na sprint de débito.
 
 **Regra para chats futuros:** ao criar ou tocar qualquer Model, verificar se `HasUuids` está presente. Se não estiver — adicionar. Não tratar como escopo expandido. É correção de consistência.
@@ -201,44 +201,50 @@ Demais Models não auditados — uniformizar na sprint de débito.
 
 ## O que já foi produzido
 
-| Artefato                           | Arquivo                                                            | Versão atual                                          |
-| ---------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
-| Schema DDL PostgreSQL final        | `brasa_schema_postgres.sql`                                        | —                                                     |
-| Prompt migrations (Laravel 12)     | `prompt_migrations_brasa.md`                                       | —                                                     |
-| Prompt Models Eloquent             | `prompt_models_brasa.md`                                           | —                                                     |
-| AuthController                     | `app/Http/Controllers/AuthController.php`                          | —                                                     |
-| LoginRequest                       | `app/Http/Requests/LoginRequest.php`                               | —                                                     |
-| UsuarioResource                    | `app/Http/Resources/UsuarioResource.php`                           | modificado no BrigadaController — ver seção Resources |
-| Testes de autenticação             | `tests/Feature/Auth/AuthControllerTest.php`                        | —                                                     |
-| PasswordResetController            | `app/Http/Controllers/Auth/PasswordResetController.php`            | —                                                     |
-| EsqueciSenhaRequest                | `app/Http/Requests/Auth/EsqueciSenhaRequest.php`                   | —                                                     |
-| RedefinirSenhaRequest              | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`                 | —                                                     |
-| RecuperacaoSenhaMail               | `app/Mail/RecuperacaoSenhaMail.php`                                | —                                                     |
-| Testes de recuperação de senha     | `tests/Feature/Auth/PasswordResetControllerTest.php`               | —                                                     |
-| BrigadaController                  | `app/Http/Controllers/BrigadaController.php`                       | —                                                     |
-| StoreBrigadaRequest                | `app/Http/Requests/Brigada/StoreBrigadaRequest.php`                | —                                                     |
-| UpdateBrigadaRequest               | `app/Http/Requests/Brigada/UpdateBrigadaRequest.php`               | —                                                     |
-| AtualizarLocalizacaoBrigadaRequest | `app/Http/Requests/Brigada/AtualizarLocalizacaoBrigadaRequest.php` | —                                                     |
-| BrigadaResource                    | `app/Http/Resources/BrigadaResource.php`                           | —                                                     |
-| Testes de brigada                  | `tests/Feature/BrigadaControllerTest.php`                          | —                                                     |
-| AreaMonitoradaController           | `app/Http/Controllers/AreaMonitoradaController.php`                | —                                                     |
-| StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`  | —                                                     |
-| UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php` | —                                                     |
-| AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                    | —                                                     |
-| GeoPackageService                  | `app/Services/GeoPackageService.php`                               | —                                                     |
-| Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                   | —                                                     |
-| LocalCriticoController             | `app/Http/Controllers/LocalCriticoController.php`                  | —                                                     |
-| StoreLocalCriticoRequest           | `app/Http/Requests/LocalCritico/StoreLocalCriticoRequest.php`      | —                                                     |
-| UpdateLocalCriticoRequest          | `app/Http/Requests/LocalCritico/UpdateLocalCriticoRequest.php`     | —                                                     |
-| LocalCriticoResource               | `app/Http/Resources/LocalCriticoResource.php`                      | —                                                     |
-| LocalCriticoFactory                | `database/factories/LocalCriticoFactory.php`                       | —                                                     |
-| Testes de local crítico            | `tests/Feature/LocalCriticoControllerTest.php`                     | —                                                     |
-| UsuarioController                  | `app/Http/Controllers/UsuarioController.php`                       | —                                                     |
-| StoreUsuarioRequest                | `app/Http/Requests/Usuario/StoreUsuarioRequest.php`                | —                                                     |
-| UpdateUsuarioRequest               | `app/Http/Requests/Usuario/UpdateUsuarioRequest.php`               | —                                                     |
-| AtualizarFuncaoRequest             | `app/Http/Requests/Usuario/AtualizarFuncaoRequest.php`             | —                                                     |
-| AtualizarBrigadaRequest            | `app/Http/Requests/Usuario/AtualizarBrigadaRequest.php`            | —                                                     |
-| Testes de usuário                  | `tests/Feature/UsuarioControllerTest.php`                          | —                                                     |
+| Artefato                           | Arquivo                                                                   | Versão atual                                          |
+| ---------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Schema DDL PostgreSQL final        | `brasa_schema_postgres.sql`                                               | —                                                     |
+| Prompt migrations (Laravel 12)     | `prompt_migrations_brasa.md`                                              | —                                                     |
+| Prompt Models Eloquent             | `prompt_models_brasa.md`                                                  | —                                                     |
+| AuthController                     | `app/Http/Controllers/AuthController.php`                                 | —                                                     |
+| LoginRequest                       | `app/Http/Requests/LoginRequest.php`                                      | —                                                     |
+| UsuarioResource                    | `app/Http/Resources/UsuarioResource.php`                                  | modificado no BrigadaController — ver seção Resources |
+| Testes de autenticação             | `tests/Feature/Auth/AuthControllerTest.php`                               | —                                                     |
+| PasswordResetController            | `app/Http/Controllers/Auth/PasswordResetController.php`                   | —                                                     |
+| EsqueciSenhaRequest                | `app/Http/Requests/Auth/EsqueciSenhaRequest.php`                          | —                                                     |
+| RedefinirSenhaRequest              | `app/Http/Requests/Auth/RedefinirSenhaRequest.php`                        | —                                                     |
+| RecuperacaoSenhaMail               | `app/Mail/RecuperacaoSenhaMail.php`                                       | —                                                     |
+| Testes de recuperação de senha     | `tests/Feature/Auth/PasswordResetControllerTest.php`                      | —                                                     |
+| BrigadaController                  | `app/Http/Controllers/BrigadaController.php`                              | —                                                     |
+| StoreBrigadaRequest                | `app/Http/Requests/Brigada/StoreBrigadaRequest.php`                       | —                                                     |
+| UpdateBrigadaRequest               | `app/Http/Requests/Brigada/UpdateBrigadaRequest.php`                      | —                                                     |
+| AtualizarLocalizacaoBrigadaRequest | `app/Http/Requests/Brigada/AtualizarLocalizacaoBrigadaRequest.php`        | —                                                     |
+| BrigadaResource                    | `app/Http/Resources/BrigadaResource.php`                                  | —                                                     |
+| Testes de brigada                  | `tests/Feature/BrigadaControllerTest.php`                                 | —                                                     |
+| AreaMonitoradaController           | `app/Http/Controllers/AreaMonitoradaController.php`                       | —                                                     |
+| StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`         | —                                                     |
+| UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php`        | —                                                     |
+| AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                           | —                                                     |
+| GeoPackageService                  | `app/Services/GeoPackageService.php`                                      | —                                                     |
+| Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                          | —                                                     |
+| LocalCriticoController             | `app/Http/Controllers/LocalCriticoController.php`                         | —                                                     |
+| StoreLocalCriticoRequest           | `app/Http/Requests/LocalCritico/StoreLocalCriticoRequest.php`             | —                                                     |
+| UpdateLocalCriticoRequest          | `app/Http/Requests/LocalCritico/UpdateLocalCriticoRequest.php`            | —                                                     |
+| LocalCriticoResource               | `app/Http/Resources/LocalCriticoResource.php`                             | —                                                     |
+| LocalCriticoFactory                | `database/factories/LocalCriticoFactory.php`                              | —                                                     |
+| Testes de local crítico            | `tests/Feature/LocalCriticoControllerTest.php`                            | —                                                     |
+| UsuarioController                  | `app/Http/Controllers/UsuarioController.php`                              | —                                                     |
+| StoreUsuarioRequest                | `app/Http/Requests/Usuario/StoreUsuarioRequest.php`                       | —                                                     |
+| UpdateUsuarioRequest               | `app/Http/Requests/Usuario/UpdateUsuarioRequest.php`                      | —                                                     |
+| AtualizarFuncaoRequest             | `app/Http/Requests/Usuario/AtualizarFuncaoRequest.php`                    | —                                                     |
+| AtualizarBrigadaRequest            | `app/Http/Requests/Usuario/AtualizarBrigadaRequest.php`                   | —                                                     |
+| Testes de usuário                  | `tests/Feature/UsuarioControllerTest.php`                                 | —                                                     |
+| DeteccaoSateliteController         | `app/Http/Controllers/DeteccaoSateliteController.php`                     | —                                                     |
+| StoreDeteccaoSateliteRequest       | `app/Http/Requests/DeteccaoSatelite/StoreDeteccaoSateliteRequest.php`     | —                                                     |
+| StoreLoteDeteccaoSateliteRequest   | `app/Http/Requests/DeteccaoSatelite/StoreLoteDeteccaoSateliteRequest.php` | —                                                     |
+| DeteccaoSateliteResource           | `app/Http/Resources/DeteccaoSateliteResource.php`                         | —                                                     |
+| DeteccaoSateliteFactory            | `database/factories/DeteccaoSateliteFactory.php`                          | —                                                     |
+| Testes de detecção satélite        | `tests/Feature/DeteccaoSateliteControllerTest.php`                        | —                                                     |
 
 ---
 
@@ -250,7 +256,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
 - [x] LocalCriticoController — CRUD
 - [x] UsuarioController — CRUD + atualizarFuncao + atualizarBrigada
-- [ ] DeteccaoSateliteController
+- [x] DeteccaoSateliteController — ingestão + consulta (integração NASA FIRMS pendente)
 - [ ] IncendioController
 - [ ] LeituraMeteorologicaController
 - [ ] DespachoBrigadaController
@@ -367,6 +373,21 @@ senha_hash e cpf nunca expostos. UsuarioResource em modo completo.
 Log de auditoria em criação, atualização, remoção, mudança de função e brigada.
 Controle de papel via middleware — pendente implementação do middleware de papéis.
 
+### DeteccaoSateliteController
+
+- `GET  /api/deteccoes-satelite` — auth:sanctum (gestor, admin)
+- `POST /api/deteccoes-satelite` — auth:sanctum (admin)
+- `GET  /api/deteccoes-satelite/{deteccao}` — auth:sanctum (gestor, admin)
+- `POST /api/deteccoes-satelite/lote` — auth:sanctum (admin)
+
+Registros imutáveis — sem update e destroy por design.
+Ingestão individual e em lote (máx 500 por requisição).
+storeLote atômico via DB::transaction().
+Filtros por fonte, confiança mínima e intervalo de data.
+Integração real NASA FIRMS pendente — será implementada como Job/Service.
+Log de auditoria em store e storeLote.
+Controle de papel via middleware — pendente implementação do middleware de papéis.
+
 ---
 
 ## Dívida técnica
@@ -376,4 +397,4 @@ Controle de papel via middleware — pendente implementação do middleware de p
 | `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.            |
 | Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                        |
 | `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito. |
-| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Confirmado em `Brigada`, `AreaMonitorada`, `LocalCritico`. Demais não auditados. Uniformizar na sprint de débito.                                |
+| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Confirmado em `Brigada`, `AreaMonitorada`, `LocalCritico`, `DeteccaoSatelite`. Demais não auditados. Uniformizar na sprint de débito.            |

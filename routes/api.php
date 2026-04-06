@@ -4,6 +4,7 @@ use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
+use App\Http\Controllers\DeteccaoSateliteController;
 use App\Http\Controllers\LocalCriticoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -66,4 +67,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::patch('/usuarios/{usuario}/funcao', [UsuarioController::class, 'atualizarFuncao']);
     // Papéis futuros: admin, gestor
     Route::patch('/usuarios/{usuario}/brigada', [UsuarioController::class, 'atualizarBrigada']);
+
+    // Papéis futuros: gestor, admin
+    Route::get('/deteccoes-satelite', [DeteccaoSateliteController::class, 'index']);
+    // Papéis futuros: admin
+    Route::post('/deteccoes-satelite', [DeteccaoSateliteController::class, 'store']);
+    // Papéis futuros: admin
+    Route::post('/deteccoes-satelite/lote', [DeteccaoSateliteController::class, 'storeLote']);
+    // Papéis futuros: gestor, admin
+    Route::get('/deteccoes-satelite/{deteccao}', [DeteccaoSateliteController::class, 'show']);
 });
