@@ -16,6 +16,7 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 
 ## Stack
 
+
 | Camada            | Tecnologia                     |
 | ----------------- | ------------------------------ |
 | Backend           | PHP + Laravel 12               |
@@ -24,6 +25,7 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 | API meteorológica | OpenMeteo                      |
 | API de satélite   | NASA FIRMS                     |
 | Dados geográficos | GeoPackage (importação manual) |
+
 
 ---
 
@@ -94,13 +96,14 @@ Registro de incêndios, despacho de brigadas, importação de dados meteorológi
 
 ### Módulo 3 — Relatórios e Inteligência
 
-Análise histórica, tempo de resposta, zonas de risco. _(Relatórios gerados no client — sem tabela de relatórios no banco.)_
+Análise histórica, tempo de resposta, zonas de risco. *(Relatórios gerados no client — sem tabela de relatórios no banco.)*
 
 ---
 
 ## Schema do banco
 
 ### Tabelas ativas
+
 
 | Tabela                     | Descrição                                               |
 | -------------------------- | ------------------------------------------------------- |
@@ -115,6 +118,7 @@ Análise histórica, tempo de resposta, zonas de risco. _(Relatórios gerados no
 | `despachos_brigada`        | Despacho de brigadas para ocorrências                   |
 | `alertas`                  | Alertas automáticos — tabela polimórfica                |
 | `logs_auditoria`           | Log imutável de todas as operações                      |
+
 
 ### Relacionamentos principais
 
@@ -156,13 +160,13 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 
 ### Decisões de design relevantes
 
-**`alertas` é polimórfica sem FKs** — intencional. `origem_id` + `origem_tabela` identificam a origem. Eloquent via `morphTo`/`morphMany`. Não adicionar FKs nessa tabela.
+`**alertas` é polimórfica sem FKs** — intencional. `origem_id` + `origem_tabela` identificam a origem. Eloquent via `morphTo`/`morphMany`. Não adicionar FKs nessa tabela.
 
-**`leituras_meteorologicas` vinculada ao incêndio** — condições climáticas atreladas via `incendio_id` no momento do registro. Sem relação com `areas_monitoradas`.
+`**leituras_meteorologicas` vinculada ao incêndio** — condições climáticas atreladas via `incendio_id` no momento do registro. Sem relação com `areas_monitoradas`.
 
-**`locais_criticos` é independente** — associada opcionalmente ao incêndio via `local_critico_id` em `incendios`. Cálculo de distância feito no client.
+`**locais_criticos` é independente** — associada opcionalmente ao incêndio via `local_critico_id` em `incendios`. Cálculo de distância feito no client.
 
-**`despachos_brigada` tem CHECK de timeline** — banco garante `despachado_em ≤ chegada_em ≤ finalizado_em`. `finalizado_em` registra encerramento do combate.
+`**despachos_brigada` tem CHECK de timeline** — banco garante `despachado_em ≤ chegada_em ≤ finalizado_em`. `finalizado_em` registra encerramento do combate.
 
 **Sem tabela de relatórios** — geração de PDF/CSV é responsabilidade do client.
 
@@ -192,15 +196,15 @@ Modo restrito é exclusivo para contextos de listagem aninhada — evita vazar `
 
 ## Models — padrão HasUuids
 
-`HasUuids` foi adicionado pontualmente em `Brigada` e `AreaMonitorada` durante a implementação dos controllers.
+`HasUuids` confirmado em: `Brigada`, `AreaMonitorada`, `LocalCritico`.
+Demais Models não auditados — uniformizar na sprint de débito.
 
 **Regra para chats futuros:** ao criar ou tocar qualquer Model, verificar se `HasUuids` está presente. Se não estiver — adicionar. Não tratar como escopo expandido. É correção de consistência.
-
-Quando for pago o débito técnico, auditar todos os Models e garantir uniformidade.
 
 ---
 
 ## O que já foi produzido
+
 
 | Artefato                           | Arquivo                                                            | Versão atual                                          |
 | ---------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
@@ -232,35 +236,38 @@ Quando for pago o débito técnico, auditar todos os Models e garantir uniformid
 | StoreLocalCriticoRequest           | `app/Http/Requests/LocalCritico/StoreLocalCriticoRequest.php`      | —                                                     |
 | UpdateLocalCriticoRequest          | `app/Http/Requests/LocalCritico/UpdateLocalCriticoRequest.php`     | —                                                     |
 | LocalCriticoResource               | `app/Http/Resources/LocalCriticoResource.php`                      | —                                                     |
+| LocalCriticoFactory                | `database/factories/LocalCriticoFactory.php`                       | —                                                     |
 | Testes de local crítico            | `tests/Feature/LocalCriticoControllerTest.php`                     | —                                                     |
+
 
 ---
 
 ## O que ainda precisa ser feito
 
-- [x] Autenticação — AuthController (Sanctum)
-- [x] Recuperação de senha — PasswordResetController
-- [x] BrigadaController — CRUD + atualização de localização
-- [x] AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
-- [x] LocalCriticoController
-- [ ] UsuarioController
-- [ ] DeteccaoSateliteController
-- [ ] IncendioController
-- [ ] LeituraMeteorologicaController
-- [ ] DespachoBrigadaController
-- [ ] AlertaController
-- [ ] LogAuditoriaController
-- [ ] Migrations Laravel
-- [ ] Models Eloquent com relacionamentos
-- [ ] Seeders de desenvolvimento
-- [ ] Integração OpenMeteo
-- [ ] Integração NASA FIRMS
-- [ ] Visualização de mapa (frontend)
-- [ ] Sistema de alertas (push + email)
+- Autenticação — AuthController (Sanctum)
+- Recuperação de senha — PasswordResetController
+- BrigadaController — CRUD + atualização de localização
+- AreaMonitoradaController — CRUD + importação GeoPackage (MVP síncrono)
+- LocalCriticoController — CRUD
+- UsuarioController
+- DeteccaoSateliteController
+- IncendioController
+- LeituraMeteorologicaController
+- DespachoBrigadaController
+- AlertaController
+- LogAuditoriaController
+- Migrations Laravel
+- Models Eloquent com relacionamentos
+- Seeders de desenvolvimento
+- Integração OpenMeteo
+- Integração NASA FIRMS
+- Visualização de mapa (frontend)
+- Sistema de alertas (push + email)
 
 ---
 
 ## Sequência de controllers
+
 
 | Ordem | Controller                       | Grupo | Depende de                                                      |
 | ----- | -------------------------------- | ----- | --------------------------------------------------------------- |
@@ -276,6 +283,7 @@ Quando for pago o débito técnico, auditar todos os Models e garantir uniformid
 | 10    | `DespachoBrigadaController`      | 4     | `Incendio`, `Brigada`                                           |
 | 11    | `AlertaController`               | 4     | — (somente leitura + patch)                                     |
 | 12    | `LogAuditoriaController`         | 4     | — (somente leitura, admin only)                                 |
+
 
 ---
 
@@ -330,8 +338,8 @@ Conversão WKB→WKT pendente como dívida técnica.
 
 ### LocalCriticoController
 
-- `GET    /api/locais-criticos`         — auth:sanctum (gestor, admin)
-- `POST   /api/locais-criticos`         — auth:sanctum (admin)
+- `GET    /api/locais-criticos` — auth:sanctum (gestor, admin)
+- `POST   /api/locais-criticos` — auth:sanctum (admin)
 - `GET    /api/locais-criticos/{local}` — auth:sanctum (gestor, admin)
 - `PUT    /api/locais-criticos/{local}` — auth:sanctum (admin)
 - `DELETE /api/locais-criticos/{local}` — auth:sanctum (admin)
@@ -347,9 +355,12 @@ Controle de papel via middleware — pendente implementação do middleware de p
 
 ## Dívida técnica
 
+
 | Item                                           | Localização                                                       | Descrição                                                                                                                                        |
 | ---------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.            |
 | Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                        |
 | `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito. |
-| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Adicionado pontualmente em `Brigada` e `AreaMonitorada`. Demais Models não auditados. Uniformizar na sprint de débito.                           |
+| `HasUuids` inconsistente nos Models            | `app/Models/`*                                                    | Confirmado em `Brigada`, `AreaMonitorada`, `LocalCritico`. Demais não auditados. Uniformizar na sprint de débito.                                |
+
+
