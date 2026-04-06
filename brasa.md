@@ -245,6 +245,15 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | DeteccaoSateliteResource           | `app/Http/Resources/DeteccaoSateliteResource.php`                         | —                                                     |
 | DeteccaoSateliteFactory            | `database/factories/DeteccaoSateliteFactory.php`                          | —                                                     |
 | Testes de detecção satélite        | `tests/Feature/DeteccaoSateliteControllerTest.php`                        | —                                                     |
+| IncendioController                 | `app/Http/Controllers/IncendioController.php`                             | —                                                     |
+| StoreIncendioRequest               | `app/Http/Requests/Incendio/StoreIncendioRequest.php`                     | —                                                     |
+| UpdateIncendioRequest              | `app/Http/Requests/Incendio/UpdateIncendioRequest.php`                    | —                                                     |
+| AtualizarStatusRequest             | `app/Http/Requests/Incendio/AtualizarStatusRequest.php`                   | —                                                     |
+| AtualizarRiscoRequest              | `app/Http/Requests/Incendio/AtualizarRiscoRequest.php`                    | —                                                     |
+| IncendioResource                   | `app/Http/Resources/IncendioResource.php`                                 | —                                                     |
+| AreaMonitoradaFactory              | `database/factories/AreaMonitoradaFactory.php`                            | —                                                     |
+| IncendioFactory                    | `database/factories/IncendioFactory.php`                                  | —                                                     |
+| Testes de incêndio                 | `tests/Feature/IncendioControllerTest.php`                                | —                                                     |
 
 ---
 
@@ -257,7 +266,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] LocalCriticoController — CRUD
 - [x] UsuarioController — CRUD + atualizarFuncao + atualizarBrigada
 - [x] DeteccaoSateliteController — ingestão + consulta (integração NASA FIRMS pendente)
-- [ ] IncendioController
+- [x] IncendioController — registro + status + risco
 - [ ] LeituraMeteorologicaController
 - [ ] DespachoBrigadaController
 - [ ] AlertaController
@@ -388,13 +397,29 @@ Integração real NASA FIRMS pendente — será implementada como Job/Service.
 Log de auditoria em store e storeLote.
 Controle de papel via middleware — pendente implementação do middleware de papéis.
 
+### IncendioController
+
+- `GET   /api/incendios` — auth:sanctum (brigadista, gestor, admin)
+- `POST  /api/incendios` — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, admin)
+- `PUT   /api/incendios/{incendio}` — auth:sanctum (gestor, admin)
+- `PATCH /api/incendios/{incendio}/status` — auth:sanctum (brigadista, gestor, admin)
+- `PATCH /api/incendios/{incendio}/risco` — auth:sanctum (gestor, admin)
+
+Sem destroy — registros históricos imutáveis.
+usuario_id sempre do usuário autenticado — nunca do payload.
+status não aceito em store nem update — endpoint dedicado.
+Eager load de area, localCritico, deteccaoSatelite, usuario.
+Log de auditoria em registro, atualização, mudança de status e risco.
+Controle de papel via middleware — pendente implementação do middleware de papéis.
+
 ---
 
 ## Dívida técnica
 
-| Item                                           | Localização                                                       | Descrição                                                                                                                                        |
-| ---------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.            |
-| Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                        |
-| `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito. |
-| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Confirmado em `Brigada`, `AreaMonitorada`, `LocalCritico`, `DeteccaoSatelite`. Demais não auditados. Uniformizar na sprint de débito.            |
+| Item                                           | Localização                                                       | Descrição                                                                                                                                         |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.             |
+| Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                         |
+| `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito.  |
+| `HasUuids` inconsistente nos Models            | `app/Models/*`                                                    | Confirmado em `Brigada`, `AreaMonitorada`, `LocalCritico`, `DeteccaoSatelite`, `Incendio`. Demais não auditados. Uniformizar na sprint de débito. |

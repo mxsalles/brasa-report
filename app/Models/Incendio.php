@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Enums\NivelRiscoIncendio;
 use App\Enums\StatusIncendio;
+use Database\Factories\IncendioFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Incendio extends Model
 {
+    /** @use HasFactory<IncendioFactory> */
+    use HasFactory, HasUuids;
+
     protected $table = 'incendios';
 
     public $timestamps = false;
@@ -59,9 +65,17 @@ class Incendio extends Model
     /**
      * @return BelongsTo<AreaMonitorada, $this>
      */
-    public function areaMonitorada(): BelongsTo
+    public function area(): BelongsTo
     {
         return $this->belongsTo(AreaMonitorada::class, 'area_id');
+    }
+
+    /**
+     * @return BelongsTo<AreaMonitorada, $this>
+     */
+    public function areaMonitorada(): BelongsTo
+    {
+        return $this->area();
     }
 
     /**

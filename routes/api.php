@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
 use App\Http\Controllers\DeteccaoSateliteController;
+use App\Http\Controllers\IncendioController;
 use App\Http\Controllers\LocalCriticoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -76,4 +77,17 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/deteccoes-satelite/lote', [DeteccaoSateliteController::class, 'storeLote']);
     // Papéis futuros: gestor, admin
     Route::get('/deteccoes-satelite/{deteccao}', [DeteccaoSateliteController::class, 'show']);
+
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios', [IncendioController::class, 'index']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::post('/incendios', [IncendioController::class, 'store']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios/{incendio}', [IncendioController::class, 'show']);
+    // Papéis futuros: gestor, admin
+    Route::put('/incendios/{incendio}', [IncendioController::class, 'update']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
+    // Papéis futuros: gestor, admin
+    Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
 });

@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\AreaMonitoradaFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AreaMonitorada extends Model
 {
-    use HasUuids;
+    /** @use HasFactory<AreaMonitoradaFactory> */
+    use HasFactory, HasUuids;
 
     protected $table = 'areas_monitoradas';
 
