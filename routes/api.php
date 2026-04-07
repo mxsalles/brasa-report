@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
 use App\Http\Controllers\DeteccaoSateliteController;
 use App\Http\Controllers\IncendioController;
+use App\Http\Controllers\LeituraMeteorologicaController;
 use App\Http\Controllers\LocalCriticoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -90,4 +91,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
     // Papéis futuros: gestor, admin
     Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
+
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'index']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::post('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'store']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios/{incendio}/leituras/{leitura}', [LeituraMeteorologicaController::class, 'show']);
 });

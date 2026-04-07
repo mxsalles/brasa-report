@@ -254,6 +254,11 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | AreaMonitoradaFactory              | `database/factories/AreaMonitoradaFactory.php`                            | —                                                     |
 | IncendioFactory                    | `database/factories/IncendioFactory.php`                                  | —                                                     |
 | Testes de incêndio                 | `tests/Feature/IncendioControllerTest.php`                                | —                                                     |
+| LeituraMeteorologicaController     | `app/Http/Controllers/LeituraMeteorologicaController.php`                   | —                                                     |
+| StoreLeituraMeteorologicaRequest   | `app/Http/Requests/LeituraMeteorologica/StoreLeituraMeteorologicaRequest.php` | —                                                   |
+| LeituraMeteorologicaResource       | `app/Http/Resources/LeituraMeteorologicaResource.php`                       | —                                                     |
+| LeituraMeteorologicaFactory        | `database/factories/LeituraMeteorologicaFactory.php`                       | —                                                     |
+| Testes de leitura meteorológica    | `tests/Feature/LeituraMeteorologicaControllerTest.php`                      | —                                                     |
 
 ---
 
@@ -267,7 +272,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] UsuarioController — CRUD + atualizarFuncao + atualizarBrigada
 - [x] DeteccaoSateliteController — ingestão + consulta (integração NASA FIRMS pendente)
 - [x] IncendioController — registro + status + risco
-- [ ] LeituraMeteorologicaController
+- [x] LeituraMeteorologicaController — registro + consulta aninhada
 - [ ] DespachoBrigadaController
 - [ ] AlertaController
 - [ ] LogAuditoriaController
@@ -412,6 +417,20 @@ status não aceito em store nem update — endpoint dedicado.
 Eager load de area, localCritico, deteccaoSatelite, usuario.
 Log de auditoria em registro, atualização, mudança de status e risco.
 Controle de papel via middleware — pendente implementação do middleware de papéis.
+
+### LeituraMeteorologicaController
+
+- `GET  /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, admin)
+- `POST /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, admin)
+- `GET  /api/incendios/{incendio}/leituras/{leitura}` — auth:sanctum (brigadista, gestor, admin)
+
+Rotas aninhadas — leituras existem apenas no contexto de um incêndio.
+Sem update e destroy — registros de contexto imutáveis.
+incendio_id sempre da rota — nunca do payload.
+Threshold de alerta avaliado automaticamente: temperatura > 30°C ou umidade < 40%.
+Log de auditoria em store.
+Integração real OpenMeteo pendente — será implementada como Job/Service.
+Controle de papel via middleware — pendente.
 
 ---
 
