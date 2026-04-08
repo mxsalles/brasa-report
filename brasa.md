@@ -271,6 +271,10 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | AlertaResource                     | `app/Http/Resources/AlertaResource.php`                                       | —                                                     |
 | AlertaFactory                      | `database/factories/AlertaFactory.php`                                        | —                                                     |
 | Testes de alerta                   | `tests/Feature/AlertaControllerTest.php`                                      | —                                                     |
+| LogAuditoriaController             | `app/Http/Controllers/LogAuditoriaController.php`                             | —                                                     |
+| LogAuditoriaResource               | `app/Http/Resources/LogAuditoriaResource.php`                                 | —                                                     |
+| LogAuditoriaFactory                | `database/factories/LogAuditoriaFactory.php`                                  | —                                                     |
+| Testes de log auditoria            | `tests/Feature/LogAuditoriaControllerTest.php`                                | —                                                     |
 
 ---
 
@@ -287,7 +291,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] LeituraMeteorologicaController — registro + consulta aninhada
 - [x] DespachoBrigadaController — despacho + chegada + finalização
 - [x] AlertaController — leitura + marcarEntregue
-- [ ] LogAuditoriaController
+- [x] LogAuditoriaController — somente leitura, admin only
 - [ ] Migrations Laravel
 - [ ] Models Eloquent com relacionamentos
 - [ ] Seeders de desenvolvimento
@@ -472,6 +476,18 @@ Somente leitura + patch — criação via Observer/Job (pendente implementação
 Tabela polimórfica sem FKs — origem_id e origem_tabela expostos diretamente.
 marcarEntregue bloqueia se já entregue (422).
 Log de auditoria em marcarEntregue.
+Controle de papel via middleware — pendente.
+
+### LogAuditoriaController
+
+- `GET /api/logs-auditoria`       — auth:sanctum (admin)
+- `GET /api/logs-auditoria/{log}` — auth:sanctum (admin)
+
+Somente leitura — registros imutáveis por design.
+Paginação de 50 por página.
+Filtros por ação, entidade_tipo, entidade_id, usuario_id e intervalo de data.
+dados_json exposto como array — cast JSONB.
+UsuarioResource em modo completo.
 Controle de papel via middleware — pendente.
 
 ---

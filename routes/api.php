@@ -10,6 +10,7 @@ use App\Http\Controllers\DeteccaoSateliteController;
 use App\Http\Controllers\IncendioController;
 use App\Http\Controllers\LeituraMeteorologicaController;
 use App\Http\Controllers\LocalCriticoController;
+use App\Http\Controllers\LogAuditoriaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -118,4 +119,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
     // Papéis futuros: brigadista, gestor, admin
     Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
+
+    // Papéis futuros: admin
+    Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index']);
+    // Papéis futuros: admin
+    Route::get('/logs-auditoria/{log}', [LogAuditoriaController::class, 'show']);
 });
