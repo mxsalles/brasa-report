@@ -62,6 +62,7 @@ Não avançar etapas sem conclusão da anterior.
 - **Não editar o mesmo arquivo mais de uma vez** sem aprovação explícita.
 - Se um problema for identificado após a escrita: **descrever em texto e aguardar instrução** — não corrigir autonomamente.
 - Sem loops de autocorreção. Sem refatorações não solicitadas.
+- Execução de `vendor/bin/pint --dirty` não conta como edição — é formatação automática e pode ser aplicada livremente após a escrita.
 
 ### Suite de testes
 
@@ -261,7 +262,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | Testes de leitura meteorológica    | `tests/Feature/LeituraMeteorologicaControllerTest.php`                        | —                                                     |
 | DespachoBrigadaController          | `app/Http/Controllers/DespachoBrigadaController.php`                          | —                                                     |
 | StoreDespachoBrigadaRequest        | `app/Http/Requests/DespachoBrigada/StoreDespachoBrigadaRequest.php`           | —                                                     |
-| RegistrarChegadaRequest            | `app/Http/Requests/DespachoBrigada/RegistrarChegadaRequest.php`             | —                                                     |
+| RegistrarChegadaRequest            | `app/Http/Requests/DespachoBrigada/RegistrarChegadaRequest.php`               | —                                                     |
 | FinalizarDespachoRequest           | `app/Http/Requests/DespachoBrigada/FinalizarDespachoRequest.php`              | —                                                     |
 | DespachoBrigadaResource            | `app/Http/Resources/DespachoBrigadaResource.php`                              | —                                                     |
 | DespachoBrigadaFactory             | `database/factories/DespachoBrigadaFactory.php`                               | —                                                     |
@@ -445,10 +446,10 @@ Controle de papel via middleware — pendente.
 
 ### DespachoBrigadaController
 
-- `GET   /api/incendios/{incendio}/despachos`                      — auth:sanctum (brigadista, gestor, admin)
-- `POST  /api/incendios/{incendio}/despachos`                      — auth:sanctum (gestor, admin)
-- `GET   /api/incendios/{incendio}/despachos/{despacho}`           — auth:sanctum (brigadista, gestor, admin)
-- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada`   — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/incendios/{incendio}/despachos` — auth:sanctum (brigadista, gestor, admin)
+- `POST  /api/incendios/{incendio}/despachos` — auth:sanctum (gestor, admin)
+- `GET   /api/incendios/{incendio}/despachos/{despacho}` — auth:sanctum (brigadista, gestor, admin)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada` — auth:sanctum (brigadista, gestor, admin)
 - `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (brigadista, gestor, admin)
 
 Rotas aninhadas — despachos existem apenas no contexto de um incêndio.
@@ -463,8 +464,8 @@ Controle de papel via middleware — pendente.
 
 ### AlertaController
 
-- `GET   /api/alertas`                   — auth:sanctum (brigadista, gestor, admin)
-- `GET   /api/alertas/{alerta}`          — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/alertas` — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/alertas/{alerta}` — auth:sanctum (brigadista, gestor, admin)
 - `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (brigadista, gestor, admin)
 
 Somente leitura + patch — criação via Observer/Job (pendente implementação).
