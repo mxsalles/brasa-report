@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlertaController;
 use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
@@ -110,4 +111,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
     // Papéis futuros: brigadista, gestor, admin
     Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
+
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/alertas', [AlertaController::class, 'index']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
 });

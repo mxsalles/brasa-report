@@ -266,6 +266,10 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | DespachoBrigadaResource            | `app/Http/Resources/DespachoBrigadaResource.php`                              | —                                                     |
 | DespachoBrigadaFactory             | `database/factories/DespachoBrigadaFactory.php`                               | —                                                     |
 | Testes de despacho de brigada      | `tests/Feature/DespachoBrigadaControllerTest.php`                             | —                                                     |
+| AlertaController                   | `app/Http/Controllers/AlertaController.php`                                   | —                                                     |
+| AlertaResource                     | `app/Http/Resources/AlertaResource.php`                                       | —                                                     |
+| AlertaFactory                      | `database/factories/AlertaFactory.php`                                        | —                                                     |
+| Testes de alerta                   | `tests/Feature/AlertaControllerTest.php`                                      | —                                                     |
 
 ---
 
@@ -281,7 +285,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] IncendioController — registro + status + risco
 - [x] LeituraMeteorologicaController — registro + consulta aninhada
 - [x] DespachoBrigadaController — despacho + chegada + finalização
-- [ ] AlertaController
+- [x] AlertaController — leitura + marcarEntregue
 - [ ] LogAuditoriaController
 - [ ] Migrations Laravel
 - [ ] Models Eloquent com relacionamentos
@@ -455,6 +459,18 @@ store bloqueia brigada já despachada sem finalização (409).
 store marca brigada indisponível. finalizar marca brigada disponível.
 tempo_resposta_minutos calculado no resource.
 Log de auditoria em store, registrarChegada e finalizar.
+Controle de papel via middleware — pendente.
+
+### AlertaController
+
+- `GET   /api/alertas`                   — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/alertas/{alerta}`          — auth:sanctum (brigadista, gestor, admin)
+- `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (brigadista, gestor, admin)
+
+Somente leitura + patch — criação via Observer/Job (pendente implementação).
+Tabela polimórfica sem FKs — origem_id e origem_tabela expostos diretamente.
+marcarEntregue bloqueia se já entregue (422).
+Log de auditoria em marcarEntregue.
 Controle de papel via middleware — pendente.
 
 ---
