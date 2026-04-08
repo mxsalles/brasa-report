@@ -4,6 +4,7 @@ use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
+use App\Http\Controllers\DespachoBrigadaController;
 use App\Http\Controllers\DeteccaoSateliteController;
 use App\Http\Controllers\IncendioController;
 use App\Http\Controllers\LeituraMeteorologicaController;
@@ -98,4 +99,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'store']);
     // Papéis futuros: brigadista, gestor, admin
     Route::get('/incendios/{incendio}/leituras/{leitura}', [LeituraMeteorologicaController::class, 'show']);
+
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'index']);
+    // Papéis futuros: gestor, admin
+    Route::post('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'store']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::get('/incendios/{incendio}/despachos/{despacho}', [DespachoBrigadaController::class, 'show']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
+    // Papéis futuros: brigadista, gestor, admin
+    Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
 });

@@ -259,6 +259,13 @@ Demais Models não auditados — uniformizar na sprint de débito.
 | LeituraMeteorologicaResource       | `app/Http/Resources/LeituraMeteorologicaResource.php`                         | —                                                     |
 | LeituraMeteorologicaFactory        | `database/factories/LeituraMeteorologicaFactory.php`                          | —                                                     |
 | Testes de leitura meteorológica    | `tests/Feature/LeituraMeteorologicaControllerTest.php`                        | —                                                     |
+| DespachoBrigadaController          | `app/Http/Controllers/DespachoBrigadaController.php`                          | —                                                     |
+| StoreDespachoBrigadaRequest        | `app/Http/Requests/DespachoBrigada/StoreDespachoBrigadaRequest.php`           | —                                                     |
+| RegistrarChegadaRequest            | `app/Http/Requests/DespachoBrigada/RegistrarChegadaRequest.php`             | —                                                     |
+| FinalizarDespachoRequest           | `app/Http/Requests/DespachoBrigada/FinalizarDespachoRequest.php`              | —                                                     |
+| DespachoBrigadaResource            | `app/Http/Resources/DespachoBrigadaResource.php`                              | —                                                     |
+| DespachoBrigadaFactory             | `database/factories/DespachoBrigadaFactory.php`                               | —                                                     |
+| Testes de despacho de brigada      | `tests/Feature/DespachoBrigadaControllerTest.php`                             | —                                                     |
 
 ---
 
@@ -273,7 +280,7 @@ Demais Models não auditados — uniformizar na sprint de débito.
 - [x] DeteccaoSateliteController — ingestão + consulta (integração NASA FIRMS pendente)
 - [x] IncendioController — registro + status + risco
 - [x] LeituraMeteorologicaController — registro + consulta aninhada
-- [ ] DespachoBrigadaController
+- [x] DespachoBrigadaController — despacho + chegada + finalização
 - [ ] AlertaController
 - [ ] LogAuditoriaController
 - [ ] Migrations Laravel
@@ -430,6 +437,24 @@ incendio_id sempre da rota — nunca do payload.
 Threshold de alerta avaliado automaticamente: temperatura > 30°C ou umidade < 40%.
 Log de auditoria em store.
 Integração real OpenMeteo pendente — será implementada como Job/Service.
+Controle de papel via middleware — pendente.
+
+### DespachoBrigadaController
+
+- `GET   /api/incendios/{incendio}/despachos`                      — auth:sanctum (brigadista, gestor, admin)
+- `POST  /api/incendios/{incendio}/despachos`                      — auth:sanctum (gestor, admin)
+- `GET   /api/incendios/{incendio}/despachos/{despacho}`           — auth:sanctum (brigadista, gestor, admin)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada`   — auth:sanctum (brigadista, gestor, admin)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (brigadista, gestor, admin)
+
+Rotas aninhadas — despachos existem apenas no contexto de um incêndio.
+Sem update genérico e sem destroy — registros operacionais históricos.
+Ciclo de vida: despacho → chegada → finalização.
+CHECK de timeline garantido no banco — não replicado no controller.
+store bloqueia brigada já despachada sem finalização (409).
+store marca brigada indisponível. finalizar marca brigada disponível.
+tempo_resposta_minutos calculado no resource.
+Log de auditoria em store, registrarChegada e finalizar.
 Controle de papel via middleware — pendente.
 
 ---

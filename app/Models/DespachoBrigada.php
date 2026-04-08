@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use Carbon\CarbonInterval;
+use Database\Factories\DespachoBrigadaFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DespachoBrigada extends Model
 {
+    /** @use HasFactory<DespachoBrigadaFactory> */
+    use HasFactory;
+
     protected $table = 'despachos_brigada';
 
     public $timestamps = false;
