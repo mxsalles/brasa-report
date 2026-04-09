@@ -253,7 +253,7 @@ test('test_revoga_todos_tokens_sanctum_apos_redefinicao', function () {
         'senha_hash' => Hash::make('senha12345'),
     ]);
 
-    $usuario->createToken('brasa');
+    $usuario->createToken('caninde');
     $usuario->createToken('outro');
 
     $tokenPlano = 'token-reset-sanctum';

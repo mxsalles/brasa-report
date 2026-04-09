@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\LeituraMeteorologicaFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class LeituraMeteorologica extends Model
 {
     /** @use HasFactory<LeituraMeteorologicaFactory> */
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $table = 'leituras_meteorologicas';
 

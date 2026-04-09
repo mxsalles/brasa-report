@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\Usuario;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -40,6 +42,34 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        Fortify::authenticateUsing(function (Request $request): ?Usuario {
+            $login = $request->input('email');
+            $password = $request->input('password');
+
+            if (! is_string($login) || ! is_string($password)) {
+                return null;
+            }
+
+            $user = null;
+
+            if (str_contains($login, '@')) {
+                $user = Usuario::query()
+                    ->whereRaw('LOWER(email) = ?', [Str::lower($login)])
+                    ->first();
+            } else {
+                $digits = preg_replace('/\D/', '', $login) ?? '';
+                if (strlen($digits) === 11) {
+                    $user = Usuario::query()->where('cpf', $digits)->first();
+                }
+            }
+
+            if ($user === null || ! Hash::check($password, $user->senha_hash)) {
+                return null;
+            }
+
+            return $user;
+        });
     }
 
     /**

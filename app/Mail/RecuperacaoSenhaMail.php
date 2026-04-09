@@ -22,7 +22,7 @@ class RecuperacaoSenhaMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Recuperação de senha — Brasa',
+            subject: 'Recuperação de senha — Canindé',
         );
     }
 

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TokenRecuperacaoSenha extends Model
 {
+    use HasUuids;
+
     protected $table = 'tokens_recuperacao_senha';
 
     public const CREATED_AT = 'criado_em';

@@ -22,6 +22,34 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
+test('users can authenticate with cpf digits on the login screen', function () {
+    $user = Usuario::factory()->create([
+        'cpf' => '52998224725',
+    ]);
+
+    $response = $this->post(route('login.store'), [
+        'email' => '52998224725',
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('users can authenticate with masked cpf on the login screen', function () {
+    $user = Usuario::factory()->create([
+        'cpf' => '52998224725',
+    ]);
+
+    $response = $this->post(route('login.store'), [
+        'email' => '529.982.247-25',
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
 test('users with two factor enabled are redirected to two factor challenge', function () {
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
