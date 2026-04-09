@@ -6,9 +6,12 @@ export type AppLayoutProps = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
+export type AuthHeaderIcon = 'user' | 'key';
+
 export type AuthLayoutProps = {
     children?: ReactNode;
     name?: string;
     title?: string;
     description?: string;
+    headerIcon?: AuthHeaderIcon;
 };

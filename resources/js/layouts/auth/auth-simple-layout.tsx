@@ -1,7 +1,7 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import { cn } from '@/lib/utils';
 import type { AuthLayoutProps } from '@/types';
-import { home } from '@/routes';
+
+const LOGO_SRC = '/images/logo-caninde.png';
 
 export default function AuthSimpleLayout({
     children,
@@ -9,25 +9,41 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
-
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
+        <div
+            className={cn(
+                'auth-caninde flex min-h-svh flex-col items-center justify-center p-6 md:p-10',
+            )}
+            style={{
+                backgroundColor: 'var(--caninde-auth-canvas)',
+            }}
+        >
+            <div
+                className={cn(
+                    'w-full max-w-md rounded-xl border border-neutral-200/80 shadow-md shadow-neutral-900/5',
+                )}
+                style={{ backgroundColor: 'var(--caninde-auth-card)' }}
+            >
+                <div className="flex flex-col gap-8 px-8 py-10 md:px-10 md:py-10">
+                    <div className="flex flex-col items-center gap-5 text-center">
+                        <img
+                            src={LOGO_SRC}
+                            alt="Canindé"
+                            className="size-20 object-contain"
+                            width={80}
+                            height={80}
+                        />
+                        <div className="space-y-2">
+                            <h1
+                                className="text-xl font-semibold tracking-tight"
+                                style={{ color: 'var(--caninde-auth-heading)' }}
+                            >
+                                {title}
+                            </h1>
+                            {description ? (
+                                <p className="text-sm leading-relaxed text-neutral-500">
+                                    {description}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
                     {children}
