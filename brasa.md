@@ -42,9 +42,9 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 ## Frontend (Inertia)
 
-### Telas do protótipo ainda não expostas (hidden)
+### Rotas alinhadas ao protótipo Canindé
 
-O protótipo de referência (projeto **caninde**, React Router) inclui telas de **mapa**, **registrar incêndio**, **alertas**, **brigadas** e **administração**, além de fluxos visuais de cadastro e recuperação de senha. **Neste repositório**, na área autenticada, só há rota e navegação para o **dashboard**; **não** existem rotas Laravel nem itens na sidebar para essas áreas — o conteúdo correspondente será implementado em commits posteriores, após o fluxo atual estar estável.
+As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar; o conteúdo é **mock** no frontend (dados em `resources/js/data/operacoes-mock.ts`, mapa com **Leaflet**). A persistência em PostgreSQL e APIs reais ficam para iterações seguintes.
 
 ---
 

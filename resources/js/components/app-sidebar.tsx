@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { LayoutGrid } from 'lucide-react';
+import {
+    Bell,
+    LayoutGrid,
+    Map,
+    PlusCircle,
+    Shield,
+    Users,
+} from 'lucide-react';
+
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -11,7 +19,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import {
+    administracao,
+    alertas,
+    brigadas,
+    dashboard,
+    mapa,
+    registrarIncendio,
+} from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
@@ -20,6 +35,31 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Mapa',
+        href: mapa(),
+        icon: Map,
+    },
+    {
+        title: 'Registrar',
+        href: registrarIncendio(),
+        icon: PlusCircle,
+    },
+    {
+        title: 'Alertas',
+        href: alertas(),
+        icon: Bell,
+    },
+    {
+        title: 'Brigadas',
+        href: brigadas(),
+        icon: Users,
+    },
+    {
+        title: 'Admin',
+        href: administracao(),
+        icon: Shield,
     },
 ];
 

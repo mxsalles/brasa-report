@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
     /** @use HasFactory<UsuarioFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     protected $table = 'usuarios';
 
@@ -47,6 +48,8 @@ class Usuario extends Authenticatable
         'senha_hash',
         'cpf',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -57,6 +60,7 @@ class Usuario extends Authenticatable
         return [
             'senha_hash' => 'hashed',
             'funcao' => FuncaoUsuario::class,
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
