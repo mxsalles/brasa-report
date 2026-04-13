@@ -12,9 +12,9 @@ import {
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { mockAlertasDetalhados } from '@/data/operacoes-mock';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { mockAlertasDetalhados } from '@/data/operacoes-mock';
 import { alertas as alertasRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { TipoAlerta } from '@/types/operacoes';

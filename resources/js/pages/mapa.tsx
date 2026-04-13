@@ -15,11 +15,11 @@ import { MapComponent } from '@/components/map-component';
 import { RiskBadge } from '@/components/risk-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
 import {
     mockClimaMapa,
     mockIncendiosMapa,
 } from '@/data/operacoes-mock';
+import AppLayout from '@/layouts/app-layout';
 import { mapa as mapaRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 

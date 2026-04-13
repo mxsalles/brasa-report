@@ -10,13 +10,13 @@ import {
     Users,
 } from 'lucide-react';
 
-import AppLayout from '@/layouts/app-layout';
-import { cn } from '@/lib/utils';
 import {
     mockBrigadas,
     mockDespachos,
     mockIncendiosMapa,
 } from '@/data/operacoes-mock';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { brigadas as brigadasRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { StatusBrigada } from '@/types/operacoes';

@@ -20,12 +20,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import AppLayout from '@/layouts/app-layout';
-import { cn } from '@/lib/utils';
 import {
     mockLogsAuditoria,
     mockUsuariosAdmin,
 } from '@/data/operacoes-mock';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { administracao as administracaoRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { FuncaoUsuarioMock } from '@/types/operacoes';
