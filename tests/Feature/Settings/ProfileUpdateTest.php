@@ -3,7 +3,7 @@
 use App\Models\Usuario;
 
 test('profile page is displayed', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -13,7 +13,7 @@ test('profile page is displayed', function () {
 });
 
 test('profile information can be updated', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -33,7 +33,7 @@ test('profile information can be updated', function () {
 });
 
 test('profile nome can be updated when email is unchanged', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -50,7 +50,7 @@ test('profile nome can be updated when email is unchanged', function () {
 });
 
 test('user can delete their account', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -67,7 +67,7 @@ test('user can delete their account', function () {
 });
 
 test('correct password must be provided to delete account', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)

@@ -48,6 +48,18 @@ As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas*
 
 ---
 
+## Autenticação web
+
+- **Engine:** Laravel Fortify + sessão (guard `web`)
+- **Registro:** público, `funcao = 'brigadista'` por padrão
+- **Verificação de email:** obrigatória — middleware `verified` em todas as rotas do app
+- **Mailer:** Mailpit (`localhost:1025`) em desenvolvimento
+- **Promoção de papéis:** exclusiva do `admin` via `PATCH /api/usuarios/{usuario}/funcao`
+- **API mobile (futuro):** `AuthController` com Sanctum mantido intacto em `app/Http/Controllers/AuthController.php`
+- **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
+
+---
+
 ## Convenções do projeto
 
 - **Idioma dos campos:** português (tabelas, colunas, enums)
@@ -297,6 +309,11 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | LogAuditoriaResource               | `app/Http/Resources/LogAuditoriaResource.php`                                 | —                                                     |
 | LogAuditoriaFactory                | `database/factories/LogAuditoriaFactory.php`                                  | —                                                     |
 | Testes de log auditoria            | `tests/Feature/LogAuditoriaControllerTest.php`                                | —                                                     |
+| CreateNewUsuario                   | `app/Actions/Fortify/CreateNewUsuario.php`                                    | —                                                     |
+| UpdateUsuarioPassword              | `app/Actions/Fortify/UpdateUsuarioPassword.php`                               | —                                                     |
+| Migration email_verified_at        | migration add_email_verified_at_to_usuarios_table                           | —                                                     |
+| Testes de registro                 | `tests/Feature/Auth/RegistrationTest.php`                                     | —                                                     |
+| Testes de verificação              | `tests/Feature/Auth/EmailVerificationTest.php`                                | —                                                     |
 | UsuarioSeeder                      | `database/seeders/UsuarioSeeder.php`                                          | —                                                     |
 | DatabaseSeeder                     | `database/seeders/DatabaseSeeder.php`                                         | —                                                     |
 
@@ -316,6 +333,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [x] DespachoBrigadaController — despacho + chegada + finalização
 - [x] AlertaController — leitura + marcarEntregue
 - [x] LogAuditoriaController — somente leitura, admin only
+- [x] Autenticação web completa — Fortify + verificação de email + Mailpit
 - [ ] Migrations Laravel
 - [ ] Models Eloquent com relacionamentos
 - [x] Seeders de desenvolvimento
@@ -524,3 +542,4 @@ Controle de papel via middleware — pendente.
 | `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.                                                                                 |
 | Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                                                                                             |
 | `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito.                                                                      |
+| `AuthController` Sanctum vs Fortify          | `app/Http/Controllers/AuthController.php`                         | AuthController foi construído para API stateless. O fluxo web migrou para Fortify. O controller permanece para uso futuro mobile. Testes do AuthController testam a camada de API — não o fluxo web. |

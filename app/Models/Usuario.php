@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\FuncaoUsuario;
 use Database\Factories\UsuarioFactory;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,10 +15,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-class Usuario extends Authenticatable
+class Usuario extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UsuarioFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasUuids, MustVerifyEmailTrait, Notifiable, TwoFactorAuthenticatable;
 
     protected $table = 'usuarios';
 
@@ -34,6 +36,7 @@ class Usuario extends Authenticatable
     protected $fillable = [
         'nome',
         'email',
+        'email_verified_at',
         'cpf',
         'senha_hash',
         'funcao',
@@ -60,6 +63,7 @@ class Usuario extends Authenticatable
         return [
             'senha_hash' => 'hashed',
             'funcao' => FuncaoUsuario::class,
+            'email_verified_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
@@ -67,6 +71,11 @@ class Usuario extends Authenticatable
     public function getAuthPassword(): string
     {
         return $this->senha_hash;
+    }
+
+    public function getEmailForVerification(): string
+    {
+        return $this->email;
     }
 
     /**

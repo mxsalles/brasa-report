@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
-class CreateNewUser implements CreatesNewUsers
+class CreateNewUsuario implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
 
@@ -22,7 +22,7 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input): Usuario
     {
         Validator::make($input, [
-            'name' => $this->nomeRules(),
+            'nome' => $this->nomeRules(),
             'email' => $this->emailRules(),
             'cpf' => [
                 'required',
@@ -35,7 +35,7 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         return Usuario::create([
-            'nome' => $input['name'],
+            'nome' => $input['nome'],
             'email' => $input['email'],
             'cpf' => $input['cpf'],
             'senha_hash' => $input['password'],

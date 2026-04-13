@@ -18,7 +18,7 @@ test('guests are redirected to login when visiting operacao routes', function ()
 });
 
 test('authenticated users can visit operacao routes', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
     $this->actingAs($user);
 
     foreach (

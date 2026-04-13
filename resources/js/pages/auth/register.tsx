@@ -46,19 +46,19 @@ export default function Register() {
                         <input type="hidden" name="cpf" value={cpfDigits} />
                         <div className="grid gap-5">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Nome completo</Label>
+                                <Label htmlFor="nome">Nome completo</Label>
                                 <Input
-                                    id="name"
+                                    id="nome"
                                     type="text"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="name"
-                                    name="name"
+                                    name="nome"
                                     placeholder="Digite seu nome completo"
                                 />
                                 <InputError
-                                    message={errors.name}
+                                    message={errors.nome}
                                     className="mt-2"
                                 />
                             </div>

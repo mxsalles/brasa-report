@@ -24,6 +24,7 @@ class UsuarioSeeder extends Seeder
                 'senha_hash' => $senhaHash,
                 'funcao' => FuncaoUsuario::Brigadista,
                 'brigada_id' => null,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -35,6 +36,7 @@ class UsuarioSeeder extends Seeder
                 'senha_hash' => $senhaHash,
                 'funcao' => FuncaoUsuario::Gestor,
                 'brigada_id' => null,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -46,6 +48,7 @@ class UsuarioSeeder extends Seeder
                 'senha_hash' => $senhaHash,
                 'funcao' => FuncaoUsuario::Admin,
                 'brigada_id' => null,
+                'email_verified_at' => now(),
             ]
         );
     }

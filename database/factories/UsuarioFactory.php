@@ -30,11 +30,32 @@ class UsuarioFactory extends Factory
         return [
             'nome' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => null,
             'cpf' => fake()->unique()->numerify('###########'),
             'senha_hash' => static::$password ??= Hash::make('password'),
             'funcao' => FuncaoUsuario::Brigadista,
             'brigada_id' => null,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * @return $this
+     */
+    public function verified(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'email_verified_at' => now(),
+        ]);
+    }
+
+    /**
+     * @return $this
+     */
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'email_verified_at' => null,
+        ]);
     }
 }

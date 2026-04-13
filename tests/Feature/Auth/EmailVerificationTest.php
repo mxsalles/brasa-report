@@ -4,13 +4,7 @@ use App\Models\Usuario;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
-use Laravel\Fortify\Features;
-
-beforeEach(function () {
-    if (! Features::enabled(Features::emailVerification())) {
-        $this->markTestSkipped('Email verification is disabled.');
-    }
-});
+use Laravel\Fortify\Fortify;
 
 test('email verification screen can be rendered', function () {
     $user = Usuario::factory()->create();
@@ -20,7 +14,34 @@ test('email verification screen can be rendered', function () {
     $response->assertOk();
 });
 
-test('email can be verified', function () {
+test('usuario nao verificado e redirecionado', function () {
+    $user = Usuario::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertRedirect(route('verification.notice'));
+});
+
+test('usuario verificado acessa dashboard', function () {
+    $user = Usuario::factory()->verified()->create();
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertOk();
+});
+
+test('reenvio de email de verificacao', function () {
+    $user = Usuario::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from(route('verification.notice'))
+        ->post(route('verification.send'));
+
+    $response->assertRedirect(route('verification.notice'));
+    $response->assertSessionHas('status', Fortify::VERIFICATION_LINK_SENT);
+});
+
+test('link de verificacao funciona', function () {
     $user = Usuario::factory()->create();
 
     Event::fake();
@@ -28,7 +49,7 @@ test('email can be verified', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1($user->email)]
+        ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())]
     );
 
     $response = $this->actingAs($user)->get($verificationUrl);
@@ -46,7 +67,7 @@ test('email is not verified with invalid hash', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1('wrong-email')]
+        ['id' => $user->getKey(), 'hash' => sha1('wrong-email')]
     );
 
     $this->actingAs($user)->get($verificationUrl);
@@ -63,17 +84,19 @@ test('email is not verified with invalid user id', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => 123, 'hash' => sha1($user->email)]
+        ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())]
     );
 
-    $this->actingAs($user)->get($verificationUrl);
+    $outroUsuario = Usuario::factory()->create();
+
+    $this->actingAs($outroUsuario)->get($verificationUrl);
 
     Event::assertNotDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
 test('verified user is redirected to dashboard from verification prompt', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     Event::fake();
 
@@ -84,14 +107,14 @@ test('verified user is redirected to dashboard from verification prompt', functi
 });
 
 test('already verified user visiting verification link is redirected without firing event again', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     Event::fake();
 
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1($user->email)]
+        ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())]
     );
 
     $this->actingAs($user)->get($verificationUrl)

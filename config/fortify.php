@@ -77,6 +77,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Redirect Paths
+    |--------------------------------------------------------------------------
+    */
+
+    'redirects' => [
+        'register' => '/email/verify',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fortify Routes Prefix / Subdomain
     |--------------------------------------------------------------------------
     |
@@ -146,6 +156,7 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
+        Features::emailVerification(),
         Features::twoFactorAuthentication(),
     ],
 

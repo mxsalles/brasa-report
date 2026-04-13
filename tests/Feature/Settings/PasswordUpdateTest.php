@@ -4,7 +4,7 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 
 test('password update page is displayed', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -14,7 +14,7 @@ test('password update page is displayed', function () {
 });
 
 test('password can be updated', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
@@ -33,7 +33,7 @@ test('password can be updated', function () {
 });
 
 test('correct password must be provided to update password', function () {
-    $user = Usuario::factory()->create();
+    $user = Usuario::factory()->verified()->create();
 
     $response = $this
         ->actingAs($user)
