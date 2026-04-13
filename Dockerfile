@@ -3,11 +3,7 @@
 # =============================================================================
 FROM php:8.4-cli-alpine AS php-builder
 
-RUN apk add --no-cache \
-    unzip \
-    git \
-    postgresql-dev \
-    oniguruma-dev \
+RUN apk add --no-cache unzip git postgresql-dev oniguruma-dev \
     && docker-php-ext-install pdo pdo_pgsql mbstring
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
@@ -25,22 +21,24 @@ RUN composer install \
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
-# Gera os arquivos TypeScript do Wayfinder (actions/ e routes/)
+# Gera os arquivos TypeScript do Wayfinder (resources/js/actions/ e routes/)
 RUN php artisan wayfinder:generate
 
 # =============================================================================
 # Stage 2: Node.js — build dos assets frontend (React + Vite + Tailwind)
 # =============================================================================
-FROM node:22-alpine AS node-builder
+FROM php:8.4-cli-alpine AS node-builder
+
+# Instala Node.js no mesmo container que já tem PHP 8.4
+RUN apk add --no-cache nodejs npm postgresql-dev oniguruma-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --frozen-lockfile
-
-# Copia todo o projeto + arquivos do Wayfinder já gerados pelo stage anterior
+# Recebe tudo do stage anterior (vendor + wayfinder gerado)
 COPY --from=php-builder /app .
 
+RUN npm ci --frozen-lockfile
 RUN npm run build
 
 # =============================================================================
