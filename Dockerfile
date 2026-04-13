@@ -3,19 +3,20 @@
 # =============================================================================
 FROM node:22-alpine AS node-builder
 
+# PHP é necessário para o vite-plugin-wayfinder gerar os tipos durante o build
+RUN apk add --no-cache php83 php83-phar php83-mbstring php83-openssl php83-tokenizer php83-xml php83-xmlwriter php83-simplexml php83-dom php83-pdo php83-pdo_sqlite php83-sqlite3 php83-ctype php83-fileinfo php83-session \
+    && ln -sf /usr/bin/php83 /usr/bin/php
+
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+# Copia vendor (dependências PHP) para o artisan funcionar
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist
+
+COPY . .
+
 RUN npm ci --frozen-lockfile
-
-COPY resources/ resources/
-COPY vite.config.* ./
-COPY tsconfig* ./
-COPY postcss.config* ./
-COPY tailwind.config* ./
-COPY app/ app/
-COPY routes/ routes/
-
 RUN npm run build
 
 # =============================================================================
