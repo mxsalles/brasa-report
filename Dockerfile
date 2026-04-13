@@ -1,28 +1,16 @@
 # =============================================================================
-# Stage 1: Node.js — build dos assets frontend (React + Vite + Tailwind)
+# Stage 1: PHP + Composer — instala deps e gera arquivos do Wayfinder
 # =============================================================================
-FROM node:22-alpine AS node-builder
+FROM php:8.4-cli-alpine AS php-builder
 
-# PHP é necessário para o vite-plugin-wayfinder gerar os tipos durante o build
-RUN apk add --no-cache php83 php83-phar php83-mbstring php83-openssl php83-tokenizer php83-xml php83-xmlwriter php83-simplexml php83-dom php83-pdo php83-pdo_sqlite php83-sqlite3 php83-ctype php83-fileinfo php83-session \
-    && ln -sf /usr/bin/php83 /usr/bin/php
+RUN apk add --no-cache \
+    unzip \
+    git \
+    postgresql-dev \
+    oniguruma-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring
 
-WORKDIR /app
-
-# Copia vendor (dependências PHP) para o artisan funcionar
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist
-
-COPY . .
-
-RUN npm ci --frozen-lockfile
-RUN npm run build
-
-# =============================================================================
-# Stage 2: Composer — instala dependências PHP (sem dev)
-# =============================================================================
-FROM composer:2.8 AS composer-builder
 
 WORKDIR /app
 
@@ -36,6 +24,24 @@ RUN composer install \
 
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
+
+# Gera os arquivos TypeScript do Wayfinder (actions/ e routes/)
+RUN php artisan wayfinder:generate
+
+# =============================================================================
+# Stage 2: Node.js — build dos assets frontend (React + Vite + Tailwind)
+# =============================================================================
+FROM node:22-alpine AS node-builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci --frozen-lockfile
+
+# Copia todo o projeto + arquivos do Wayfinder já gerados pelo stage anterior
+COPY --from=php-builder /app .
+
+RUN npm run build
 
 # =============================================================================
 # Stage 3: Imagem final de produção
@@ -71,8 +77,8 @@ RUN apk add --no-cache \
 
 WORKDIR /var/www/html
 
-COPY --from=composer-builder /app/vendor ./vendor
-COPY --from=composer-builder /app .
+COPY --from=php-builder /app/vendor ./vendor
+COPY --from=php-builder /app .
 COPY --from=node-builder /app/public/build ./public/build
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-custom.ini
