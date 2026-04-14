@@ -18,12 +18,12 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 
 Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada ao protótipo em `caninde`, incluindo logo em `public/images/logo-caninde.png` e paleta azul/âmbar do protótipo).
 
-| Área | Situação |
-|------|----------|
-| **Utilizador / APP_NAME** | Usar **Canindé** em e-mails, ecrãs e variável `APP_NAME` em novos ambientes (ver `.env.example`). |
-| **Este ficheiro** | Mantém o nome histórico `brasa.md` para não quebrar referências em regras de agente e fluxos existentes. |
+| Área                        | Situação                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Utilizador / APP_NAME**   | Usar **Canindé** em e-mails, ecrãs e variável `APP_NAME` em novos ambientes (ver `.env.example`).                              |
+| **Este ficheiro**           | Mantém o nome histórico `brasa.md` para não quebrar referências em regras de agente e fluxos existentes.                       |
 | **Schema e artefactos SQL** | Ficheiros como `brasa_schema_postgres.sql` e prompts `prompt_*_brasa.md` conservam o prefixo **brasa** até migração explícita. |
-| **Código / tokens** | Novos tokens Sanctum usam o nome `caninde`; tokens ou strings antigas com `brasa` podem coexistir até serem revistos. |
+| **Código / tokens**         | Novos tokens Sanctum usam o nome `caninde`; tokens ou strings antigas com `brasa` podem coexistir até serem revistos.          |
 
 ---
 
@@ -44,7 +44,10 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 ### Rotas alinhadas ao protótipo Canindé
 
-As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar; o conteúdo é **mock** no frontend (dados em `resources/js/data/operacoes-mock.ts`, mapa com **Leaflet**). A persistência em PostgreSQL e APIs reais ficam para iterações seguintes.
+**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`).
+**Páginas ainda com mock:** mapa, alertas, brigadas, administracao.
+
+As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Dados auxiliares em `resources/js/data/operacoes-mock.ts` e mapa com **Leaflet** onde ainda mock.
 
 ---
 
@@ -57,6 +60,7 @@ As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas*
 - **Promoção de papéis:** exclusiva do `admin` via `PATCH /api/usuarios/{usuario}/funcao`
 - **API mobile (futuro):** `AuthController` com Sanctum mantido intacto em `app/Http/Controllers/AuthController.php`
 - **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
+- **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `caninde.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
 
 ---
 
@@ -66,7 +70,7 @@ As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas*
 - **UUIDs:** gerados via `gen_random_uuid()` — nativo PostgreSQL 13+, sem extensões
 - **Timestamps:** sempre `TIMESTAMPTZ` — nunca `TIMESTAMP` sem timezone
 - **Campos `criado_em` e `atualizado_em`:** autogeridos no banco via `DEFAULT NOW()` e trigger
-- **Sem extensões externas:** sem `uuid-ossp`, sem `postgis` — coordenadas em `NUMERIC(10,7)`, geometria em WKT (`TEXT`)
+- **Sem extensões externas:** sem `uuid-ossp`, sem `postgis` — coordenadas em `NUMERIC(10,7)`, geometria de áreas em GeoJSON (`longText` / JSON serializado)
 - **Chaves primárias:** sempre `id UUID`
 - **Soft delete:** não adotado — deleção física com `ON DELETE` explícito
 
@@ -141,7 +145,7 @@ Análise histórica, tempo de resposta, zonas de risco. _(Relatórios gerados no
 | `brigadas`                 | Brigadas de combate ao fogo                             |
 | `usuarios`                 | Usuários do sistema (brigadistas, gestores, admins)     |
 | `tokens_recuperacao_senha` | Tokens de reset de senha (expiram em 30 min)            |
-| `areas_monitoradas`        | Regiões geográficas sob monitoramento (GeoPackage/WKT)  |
+| `areas_monitoradas`        | Regiões geográficas sob monitoramento (GeoJSON interno; upload GeoJSON/KML/SHP) |
 | `locais_criticos`          | Pontos sensíveis: residências, escolas, infraestrutura  |
 | `deteccoes_satelite`       | Detecções de fogo via NASA FIRMS                        |
 | `incendios`                | Ocorrências de incêndio registradas                     |
@@ -260,7 +264,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | StoreAreaMonitoradaRequest         | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php`             | —                                                     |
 | UpdateAreaMonitoradaRequest        | `app/Http/Requests/AreaMonitorada/UpdateAreaMonitoradaRequest.php`            | —                                                     |
 | AreaMonitoradaResource             | `app/Http/Resources/AreaMonitoradaResource.php`                               | —                                                     |
-| GeoPackageService                  | `app/Services/GeoPackageService.php`                                          | —                                                     |
+| GeoConverterService                | `app/Services/GeoConverterService.php`                                        | GeoJSON interno; uploads GeoJSON, KML, SHP (ZIP) via phayes/geophp + php-shapefile |
 | Testes de área monitorada          | `tests/Feature/AreaMonitoradaControllerTest.php`                              | —                                                     |
 | LocalCriticoController             | `app/Http/Controllers/LocalCriticoController.php`                             | —                                                     |
 | StoreLocalCriticoRequest           | `app/Http/Requests/LocalCritico/StoreLocalCriticoRequest.php`                 | —                                                     |
@@ -311,11 +315,14 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | Testes de log auditoria            | `tests/Feature/LogAuditoriaControllerTest.php`                                | —                                                     |
 | CreateNewUsuario                   | `app/Actions/Fortify/CreateNewUsuario.php`                                    | —                                                     |
 | UpdateUsuarioPassword              | `app/Actions/Fortify/UpdateUsuarioPassword.php`                               | —                                                     |
-| Migration email_verified_at        | migration add_email_verified_at_to_usuarios_table                           | —                                                     |
+| Migration email_verified_at        | migration add_email_verified_at_to_usuarios_table                             | —                                                     |
 | Testes de registro                 | `tests/Feature/Auth/RegistrationTest.php`                                     | —                                                     |
 | Testes de verificação              | `tests/Feature/Auth/EmailVerificationTest.php`                                | —                                                     |
 | UsuarioSeeder                      | `database/seeders/UsuarioSeeder.php`                                          | —                                                     |
 | DatabaseSeeder                     | `database/seeders/DatabaseSeeder.php`                                         | —                                                     |
+| DashboardController                | `app/Http/Controllers/DashboardController.php`                               | —                                                     |
+| AreaMonitoradaSeeder               | `database/seeders/AreaMonitoradaSeeder.php`                                     | —                                                     |
+| Testes de dashboard                | `tests/Feature/DashboardControllerTest.php`                                    | —                                                     |
 
 ---
 
@@ -342,6 +349,9 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [ ] Integração NASA FIRMS
 - [ ] Visualização de mapa (frontend)
 - [ ] Sistema de alertas (push + email)
+- [x] Registro de incêndio — formulário real + Leaflet + toast
+- [x] Dashboard — KPIs reais do banco
+- [x] Área padrão "Pantanal Geral" — seeder
 
 ---
 
@@ -406,12 +416,10 @@ Membros listados via `UsuarioResource` em modo restrito (`$somenteMembroBrigada 
 - `PUT    /api/areas-monitoradas/{area}` — auth:sanctum (admin)
 - `DELETE /api/areas-monitoradas/{area}` — auth:sanctum (admin)
 
-Importação de GeoPackage via PDO/SQLite (MVP síncrono — sem Job).
-Geometria armazenada como WKT em TEXT — sem PostGIS.
+Upload opcional (`arquivo`): GeoJSON, KML ou ZIP com shapefile — normalizado para GeoJSON (`geometria_geojson`, `longText`) via `GeoConverterService` (phayes/geophp, gasparesganga/php-shapefile).
 Bloqueia remoção de área com incêndios vinculados (409).
-Arquivo removido do storage junto com o registro.
+Arquivo original removido do storage junto com o registro.
 Log de auditoria em criação, atualização e remoção.
-Conversão WKB→WKT pendente como dívida técnica.
 
 ### LocalCriticoController
 
@@ -523,7 +531,7 @@ Controle de papel via middleware — pendente.
 
 ### LogAuditoriaController
 
-- `GET /api/logs-auditoria`       — auth:sanctum (admin)
+- `GET /api/logs-auditoria` — auth:sanctum (admin)
 - `GET /api/logs-auditoria/{log}` — auth:sanctum (admin)
 
 Somente leitura — registros imutáveis por design.
@@ -537,9 +545,8 @@ Controle de papel via middleware — pendente.
 
 ## Dívida técnica
 
-| Item                                           | Localização                                                       | Descrição                                                                                                                                                                                                             |
-| ---------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.                                                                                 |
-| Conversão WKB→WKT                              | `app/Services/GeoPackageService.php`                              | GeoPackage armazena geometria em WKB binário. MVP armazena valor bruto. Conversão real para WKT pendente.                                                                                                             |
-| `extensions:gpkg` vs `mimes:gpkg`              | `app/Http/Requests/AreaMonitorada/StoreAreaMonitoradaRequest.php` | Validação usa `extensions:gpkg` por limitação do MIME no fluxo de testes. Comportamento diverge do prompt original. Revisar na sprint de débito.                                                                      |
-| `AuthController` Sanctum vs Fortify          | `app/Http/Controllers/AuthController.php`                         | AuthController foi construído para API stateless. O fluxo web migrou para Fortify. O controller permanece para uso futuro mobile. Testes do AuthController testam a camada de API — não o fluxo web. |
+| Item                                           | Localização                                                       | Descrição                                                                                                                                                                                            |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UsuarioResource` flag `$somenteMembroBrigada` | `app/Http/Resources/UsuarioResource.php`                          | Argumento opcional adicionado fora do escopo. Documentado na seção Resources. Será polido após implementação de todos os controllers.                                                                |
+| Shapefile (.shp) solto                         | `app/Services/GeoConverterService.php`                             | Upload único de `.shp` pode falhar sem `.dbf`/`.shx`; preferir ZIP com todos os ficheiros.                                                                                                        |
+| `AuthController` Sanctum vs Fortify            | `app/Http/Controllers/AuthController.php`                         | AuthController foi construído para API stateless. O fluxo web migrou para Fortify. O controller permanece para uso futuro mobile. Testes do AuthController testam a camada de API — não o fluxo web. |
