@@ -34,6 +34,7 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 | Backend           | PHP + Laravel 12               |
 | Frontend          | ReactJS + Inertia.js           |
 | Banco de dados    | PostgreSQL via Supabase        |
+| Idioma / Locale   | pt_BR (validação, UI, labels)  |
 | API meteorológica | OpenMeteo                      |
 | API de satélite   | NASA FIRMS                     |
 | Dados geográficos | GeoPackage (importação manual) |
@@ -63,6 +64,22 @@ Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful
 - **API mobile (futuro):** `AuthController` com Sanctum mantido intacto em `app/Http/Controllers/AuthController.php`
 - **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
 - **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `caninde.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
+
+---
+
+## Internacionalização (i18n)
+
+O aplicativo é 100 % pt-BR. Todas as strings visíveis ao usuário — validação, autenticação, paginação, labels, mensagens de erro, toasts, modais, aria-labels — estão em português brasileiro.
+
+| Camada                    | Como funciona                                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Locale Laravel**        | `config/app.php` → `locale = pt_BR`, `fallback_locale = pt_BR`, `faker_locale = pt_BR`; `.env` com `APP_LOCALE=pt_BR`.                 |
+| **Arquivos de idioma**    | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php` — publicados via `php artisan lang:publish` e traduzidos.    |
+| **Atributos de validação** | Mapeados em `lang/pt_BR/validation.php` → `attributes` (nome, e-mail, senha, senha atual, confirmação da senha, código, token).        |
+| **Frontend (React)**      | Strings hardcoded em pt-BR em todos os componentes, páginas, layouts, hooks e UI base (sidebar, dialog, sheet, spinner, breadcrumb).     |
+| **Blade**                 | `app.blade.php` com fallback `Canindé` no `<title>`; `<html lang="pt-BR">` via `app()->getLocale()`.                                   |
+
+**Regra:** nenhuma string em inglês visível ao usuário final. Novos componentes devem seguir a mesma convenção.
 
 ---
 
@@ -325,6 +342,8 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | DashboardController                | `app/Http/Controllers/DashboardController.php`                               | —                                                     |
 | AreaMonitoradaSeeder               | `database/seeders/AreaMonitoradaSeeder.php`                                     | —                                                     |
 | Testes de dashboard                | `tests/Feature/DashboardControllerTest.php`                                    | —                                                     |
+| Arquivos de idioma pt_BR          | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php`     | Validação, auth, senhas, paginação traduzidos          |
+| Teste de locale                   | `tests/Unit/AppLocaleTest.php`                                                 | Garante locale/fallback/faker = pt_BR                  |
 
 ---
 
@@ -354,6 +373,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [x] Registro de incêndio — formulário real + Leaflet + toast
 - [x] Dashboard — KPIs reais do banco
 - [x] Área padrão "Pantanal Geral" — seeder
+- [x] Nacionalização pt-BR — locale, lang files, frontend, UI, hooks
 
 ---
 
