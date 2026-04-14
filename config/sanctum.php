@@ -3,6 +3,7 @@
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
+use Laravel\Sanctum\Sanctum;
 
 return [
 
@@ -18,13 +19,23 @@ return [
     */
 
     /*
-     * API pura: autenticação apenas via Bearer token. Domínios stateful vazios por padrão;
-     * defina SANCTUM_STATEFUL_DOMAINS se um SPA precisar de cookies de sessão.
+     * Domínios que recebem cookies de sessão no grupo API (SPA + axios).
+     * União de `SANCTUM_STATEFUL_DOMAINS` com defaults do stub Sanctum (localhost, APP_URL, etc.).
      */
-    'stateful' => array_values(array_filter(array_map(
-        'trim',
-        explode(',', (string) env('SANCTUM_STATEFUL_DOMAINS', '')),
-    ))),
+    'stateful' => array_values(array_unique(array_filter(array_merge(
+        array_map(
+            'trim',
+            explode(',', sprintf(
+                '%s%s',
+                'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+                Sanctum::currentApplicationUrlWithPort(),
+            )),
+        ),
+        array_map(
+            'trim',
+            explode(',', (string) env('SANCTUM_STATEFUL_DOMAINS', '')),
+        ),
+    )))),
 
     /*
     |--------------------------------------------------------------------------
@@ -38,7 +49,7 @@ return [
     |
     */
 
-    'guard' => [],
+    'guard' => ['web'],
 
     /*
     |--------------------------------------------------------------------------
