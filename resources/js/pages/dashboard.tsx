@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Bell,
@@ -14,12 +15,8 @@ import {
 import { RiskBadge } from '@/components/risk-badge';
 import { StatsCard } from '@/components/stats-card';
 import { StatusBadge } from '@/components/status-badge';
-import {
-    mockAlertas,
-    mockEstatisticas,
-    mockIncendios,
-} from '@/data/dashboard-mock';
 import AppLayout from '@/layouts/app-layout';
+import axios from '@/lib/axios-setup';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { DashboardDados } from '@/types/dashboard';
@@ -36,7 +33,40 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ dados }: DashboardProps) {
-    const stats = mockEstatisticas;
+    const [dashboardDados, setDashboardDados] = useState<DashboardDados>(dados);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function carregar(): Promise<void> {
+            setIsLoading(true);
+            setHasError(false);
+            try {
+                const response = await axios.get<DashboardDados>('/api/dashboard');
+                if (isMounted) {
+                    setDashboardDados(response.data);
+                }
+            } catch {
+                if (isMounted) {
+                    setHasError(true);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        void carregar();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const clima = dashboardDados.clima;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -51,12 +81,19 @@ export default function Dashboard({ dados }: DashboardProps) {
                     <p className="text-sm text-muted-foreground">
                         Serra do Amolar — Corumbá, MS
                     </p>
-                    {dados.ultimo_registro ? (
+                    {dashboardDados.ultimo_registro ? (
                         <p className="mt-1 text-xs text-muted-foreground">
                             Último registro de incêndio:{' '}
-                            {new Date(dados.ultimo_registro).toLocaleString(
+                            {new Date(
+                                dashboardDados.ultimo_registro,
+                            ).toLocaleString(
                                 'pt-BR',
                             )}
+                        </p>
+                    ) : null}
+                    {hasError ? (
+                        <p className="mt-1 text-xs text-warning">
+                            Não foi possível atualizar os dados agora.
                         </p>
                     ) : null}
                 </motion.div>
@@ -69,24 +106,24 @@ export default function Dashboard({ dados }: DashboardProps) {
                 >
                     <StatsCard
                         label="Incêndios Ativos"
-                        value={dados.incendios.ativos}
+                        value={dashboardDados.incendios.ativos}
                         icon={Flame}
                         variant="critical"
                     />
                     <StatsCard
                         label="Alertas Pendentes"
-                        value={dados.alertas.nao_entregues}
+                        value={dashboardDados.alertas.nao_entregues}
                         icon={Bell}
                         variant="warning"
                     />
                     <StatsCard
                         label="Ocorrências Contidas"
-                        value={dados.incendios.contidos}
+                        value={dashboardDados.incendios.contidos}
                         icon={ShieldAlert}
                     />
                     <StatsCard
                         label="Incêndios Resolvidos"
-                        value={dados.incendios.resolvidos}
+                        value={dashboardDados.incendios.resolvidos}
                         icon={Users}
                         variant="success"
                     />
@@ -112,14 +149,16 @@ export default function Dashboard({ dados }: DashboardProps) {
                                     </span>
                                 </div>
                                 <span className="text-lg font-bold text-critical">
-                                    {stats.temperatura_media}°C
+                                {clima ? `${Math.round(clima.temperatura_c)}°C` : '—'}
                                 </span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-secondary">
                                 <div
                                     className="h-2 rounded-full bg-linear-to-r from-warning to-critical"
                                     style={{
-                                        width: `${(stats.temperatura_media / 50) * 100}%`,
+                                    width: clima
+                                        ? `${Math.min(100, Math.max(0, (clima.temperatura_c / 50) * 100))}%`
+                                        : '0%',
                                     }}
                                 />
                             </div>
@@ -132,24 +171,38 @@ export default function Dashboard({ dados }: DashboardProps) {
                                     </span>
                                 </div>
                                 <span className="text-lg font-bold text-warning">
-                                    {stats.umidade_media}%
+                                {clima ? `${clima.umidade_pct}%` : '—'}
                                 </span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-secondary">
                                 <div
                                     className="h-2 rounded-full bg-linear-to-r from-critical to-warning"
                                     style={{
-                                        width: `${stats.umidade_media}%`,
+                                    width: clima
+                                        ? `${Math.min(100, Math.max(0, clima.umidade_pct))}%`
+                                        : '0%',
                                     }}
                                 />
                             </div>
 
+                        {clima && clima.umidade_pct < 25 ? (
                             <div className="mt-2 rounded-lg border border-critical/20 bg-critical/10 p-3">
                                 <p className="text-xs font-medium text-critical">
                                     Risco extremo de incêndio — umidade abaixo
                                     de 25%
                                 </p>
                             </div>
+                        ) : null}
+                        {clima ? (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Atualizado:{' '}
+                                {new Date(clima.atualizado_em).toLocaleString('pt-BR')}
+                            </p>
+                        ) : (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                {isLoading ? 'Carregando clima…' : 'Clima indisponível.'}
+                            </p>
+                        )}
                         </div>
                     </motion.div>
 
@@ -164,7 +217,7 @@ export default function Dashboard({ dados }: DashboardProps) {
                             Ocorrências Recentes
                         </h3>
                         <div className="space-y-3">
-                            {mockIncendios.map((inc) => (
+                            {dashboardDados.incendios_recentes.map((inc) => (
                                 <div
                                     key={inc.id}
                                     className="flex items-start gap-3 rounded-lg bg-secondary/50 p-3 transition-colors hover:bg-secondary/80"
@@ -187,13 +240,18 @@ export default function Dashboard({ dados }: DashboardProps) {
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             {new Date(
-                                                inc.criado_em,
+                                                inc.detectado_em,
                                             ).toLocaleString('pt-BR')}{' '}
                                             — {inc.registrado_por}
                                         </p>
                                     </div>
                                 </div>
                             ))}
+                            {dashboardDados.incendios_recentes.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">
+                                    Nenhuma ocorrência recente.
+                                </p>
+                            ) : null}
                         </div>
                     </motion.div>
                 </div>
@@ -209,17 +267,17 @@ export default function Dashboard({ dados }: DashboardProps) {
                         Alertas Recentes
                     </h3>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        {mockAlertas.map((alerta) => (
+                        {dashboardDados.alertas_recentes.map((alerta) => (
                             <div
                                 key={alerta.id}
                                 className={`rounded-lg border p-3 transition-colors ${
-                                    alerta.lido
+                                    alerta.entregue
                                         ? 'border-border bg-secondary/30'
                                         : 'border-primary/20 bg-primary/5'
                                 }`}
                             >
                                 <div className="flex items-start gap-2">
-                                    {!alerta.lido ? (
+                                    {!alerta.entregue ? (
                                         <span className="status-pulse mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
                                     ) : null}
                                     <div>
@@ -228,13 +286,18 @@ export default function Dashboard({ dados }: DashboardProps) {
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             {new Date(
-                                                alerta.criado_em,
+                                                alerta.enviado_em,
                                             ).toLocaleString('pt-BR')}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         ))}
+                        {dashboardDados.alertas_recentes.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                                Nenhum alerta recente.
+                            </p>
+                        ) : null}
                     </div>
                 </motion.div>
             </div>

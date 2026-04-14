@@ -2,6 +2,12 @@ export type StatusIncendio = 'ativo' | 'contido' | 'resolvido';
 
 export type NivelRisco = 'alto' | 'medio' | 'baixo';
 
+export interface ClimaDashboard {
+    temperatura_c: number;
+    umidade_pct: number;
+    atualizado_em: string;
+}
+
 export interface IncendioResumo {
     id: string;
     status: StatusIncendio;
@@ -17,6 +23,24 @@ export interface AlertaResumo {
     mensagem: string;
     criado_em: string;
     lido: boolean;
+}
+
+export interface IncendioRecente {
+    id: string;
+    status: StatusIncendio;
+    nivel_risco: NivelRisco;
+    descricao: string;
+    area_nome: string;
+    registrado_por: string;
+    detectado_em: string;
+}
+
+export interface AlertaRecente {
+    id: string;
+    tipo: string;
+    mensagem: string;
+    enviado_em: string;
+    entregue: boolean;
 }
 
 export interface EstatisticasDashboard {
@@ -42,4 +66,7 @@ export interface DashboardDados {
         nao_entregues: number;
     };
     ultimo_registro: string | null;
+    incendios_recentes: IncendioRecente[];
+    alertas_recentes: AlertaRecente[];
+    clima: ClimaDashboard | null;
 }
