@@ -32,7 +32,7 @@ import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Painel',
         href: dashboard(),
         icon: LayoutGrid,
     },
@@ -57,7 +57,7 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
-        title: 'Admin',
+        title: 'Administração',
         href: administracao(),
         icon: Shield,
     },
