@@ -22,6 +22,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
+import type { DashboardDados } from '@/types/dashboard';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -30,7 +31,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard() {
+interface DashboardProps {
+    dados: DashboardDados;
+}
+
+export default function Dashboard({ dados }: DashboardProps) {
     const stats = mockEstatisticas;
 
     return (
@@ -46,6 +51,14 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground">
                         Serra do Amolar — Corumbá, MS
                     </p>
+                    {dados.ultimo_registro ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Último registro de incêndio:{' '}
+                            {new Date(dados.ultimo_registro).toLocaleString(
+                                'pt-BR',
+                            )}
+                        </p>
+                    ) : null}
                 </motion.div>
 
                 <motion.div
@@ -56,26 +69,26 @@ export default function Dashboard() {
                 >
                     <StatsCard
                         label="Incêndios Ativos"
-                        value={stats.incendios_ativos}
+                        value={dados.incendios.ativos}
                         icon={Flame}
                         variant="critical"
                     />
                     <StatsCard
                         label="Alertas Pendentes"
-                        value={stats.alertas_nao_lidos}
+                        value={dados.alertas.nao_entregues}
                         icon={Bell}
                         variant="warning"
                     />
                     <StatsCard
-                        label="Brigadas Disponíveis"
-                        value={stats.brigadas_disponiveis}
-                        icon={Users}
-                        variant="success"
+                        label="Ocorrências Contidas"
+                        value={dados.incendios.contidos}
+                        icon={ShieldAlert}
                     />
                     <StatsCard
-                        label="Ocorrências Contidas"
-                        value={stats.incendios_contidos}
-                        icon={ShieldAlert}
+                        label="Incêndios Resolvidos"
+                        value={dados.incendios.resolvidos}
+                        icon={Users}
+                        variant="success"
                     />
                 </motion.div>
 

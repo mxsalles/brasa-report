@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RegistrarIncendioController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -10,9 +12,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('mapa', fn () => Inertia::render('mapa'))->name('mapa');
-    Route::get('registrar-incendio', fn () => Inertia::render('registrar-incendio'))->name('registrar-incendio');
+    Route::get('registrar-incendio', RegistrarIncendioController::class)->name('registrar-incendio');
     Route::get('alertas', fn () => Inertia::render('alertas'))->name('alertas');
     Route::get('brigadas', fn () => Inertia::render('brigadas'))->name('brigadas');
     Route::get('administracao', fn () => Inertia::render('administracao'))->name('administracao');

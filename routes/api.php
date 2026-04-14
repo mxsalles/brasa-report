@@ -5,6 +5,7 @@ use App\Http\Controllers\AreaMonitoradaController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrigadaController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DespachoBrigadaController;
 use App\Http\Controllers\DeteccaoSateliteController;
 use App\Http\Controllers\IncendioController;
@@ -22,6 +23,8 @@ Route::post('/auth/senha/redefinir', [PasswordResetController::class, 'redefinir
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+
+    Route::get('/dashboard', [DashboardController::class, 'dados']);
 
     // Papéis futuros: gestor, admin
     Route::get('/brigadas', [BrigadaController::class, 'index']);

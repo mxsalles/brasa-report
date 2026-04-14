@@ -29,3 +29,17 @@ export interface EstatisticasDashboard {
     temperatura_media: number;
     umidade_media: number;
 }
+
+export interface DashboardDados {
+    incendios: {
+        total: number;
+        ativos: number;
+        contidos: number;
+        resolvidos: number;
+    };
+    alertas: {
+        total: number;
+        nao_entregues: number;
+    };
+    ultimo_registro: string | null;
+}
