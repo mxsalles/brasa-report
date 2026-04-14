@@ -11,7 +11,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <AuthLayout
             title="Verifique seu e-mail"
-            description="Verifique seu email para continuar. Enviamos um link para o endereço que você cadastrou."
+            description="Verifique seu e-mail para continuar. Enviamos um link para o endereço que você cadastrou."
             headerIcon="user"
         >
             <Head title="Verificação de e-mail" />
@@ -32,7 +32,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Reenviar email de verificação
+                            Reenviar e-mail de verificação
                         </Button>
 
                         <TextLink

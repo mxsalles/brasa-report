@@ -28,7 +28,7 @@ export default function Login({
 
     return (
         <AuthCanindeSplitLayout>
-            <Head title="Login" />
+            <Head title="Entrar" />
 
             <div className="glass-panel rounded-2xl p-8">
                 <div className="mb-6">
