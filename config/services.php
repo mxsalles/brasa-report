@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'open_meteo' => [
+        'base_url' => env('OPEN_METEO_BASE_URL', 'https://api.open-meteo.com/v1'),
+        'latitude' => env('DASHBOARD_WEATHER_LAT', -19.0083),
+        'longitude' => env('DASHBOARD_WEATHER_LON', -57.6517),
+    ],
+
 ];
