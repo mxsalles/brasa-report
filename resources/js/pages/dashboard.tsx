@@ -23,7 +23,7 @@ import type { DashboardDados } from '@/types/dashboard';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Painel',
         href: dashboard().url,
     },
 ];
@@ -70,7 +70,7 @@ export default function Dashboard({ dados }: DashboardProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title="Painel" />
             <div className="space-y-6 p-4 lg:p-6">
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}

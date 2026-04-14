@@ -435,7 +435,7 @@ export default function RegistrarIncendio({
                                     <div className="relative overflow-hidden rounded-lg">
                                         <img
                                             src={fotoPreview}
-                                            alt="Preview"
+                                            alt="Pré-visualização"
                                             className="h-40 w-full rounded-lg object-cover"
                                         />
                                         <button
