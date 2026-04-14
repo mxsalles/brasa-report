@@ -14,7 +14,7 @@ import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Profile settings',
+        title: 'Configurações do perfil',
         href: edit().url,
     },
 ];
@@ -24,16 +24,16 @@ export default function Profile({ status }: { status?: string }) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profile settings" />
+            <Head title="Configurações do perfil" />
 
-            <h1 className="sr-only">Profile Settings</h1>
+            <h1 className="sr-only">Configurações do perfil</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
-                        title="Profile information"
-                        description="Update your name and email address"
+                        title="Informações do perfil"
+                        description="Atualize seu nome e endereço de e-mail"
                     />
 
                     <Form
@@ -65,7 +65,7 @@ export default function Profile({ status }: { status?: string }) {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="email">Email address</Label>
+                                    <Label htmlFor="email">E-mail</Label>
 
                                     <Input
                                         id="email"
@@ -75,7 +75,7 @@ export default function Profile({ status }: { status?: string }) {
                                         name="email"
                                         required
                                         autoComplete="username"
-                                        placeholder="Email address"
+                                        placeholder="E-mail"
                                     />
 
                                     <InputError
@@ -89,7 +89,7 @@ export default function Profile({ status }: { status?: string }) {
                                         disabled={processing}
                                         data-test="update-profile-button"
                                     >
-                                        Save
+                                        Salvar
                                     </Button>
 
                                     <Transition
@@ -100,7 +100,7 @@ export default function Profile({ status }: { status?: string }) {
                                         leaveTo="opacity-0"
                                     >
                                         <p className="text-sm text-neutral-600">
-                                            Saved
+                                            Salvo
                                         </p>
                                     </Transition>
                                 </div>
