@@ -49,6 +49,8 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Dados auxiliares em `resources/js/data/operacoes-mock.ts` e mapa com **Leaflet** onde ainda mock.
 
+Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful) para atualização e inclui clima atual via **OpenMeteo** (chamada no backend com cache).
+
 ---
 
 ## Autenticação web
@@ -345,7 +347,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [ ] Models Eloquent com relacionamentos
 - [x] Seeders de desenvolvimento
 - [x] HasUuids — auditoria e uniformização em todos os Models
-- [ ] Integração OpenMeteo
+- [x] Integração OpenMeteo (dashboard: clima atual via API; persistência/Job ainda pendente)
 - [ ] Integração NASA FIRMS
 - [ ] Visualização de mapa (frontend)
 - [ ] Sistema de alertas (push + email)
