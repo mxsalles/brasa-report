@@ -20,7 +20,7 @@ class AreaMonitoradaFactory extends Factory
         return [
             'nome' => fake()->words(3, true),
             'caminho_geopackage' => null,
-            'geometria_wkt' => null,
+            'geometria_geojson' => null,
             'importado_em' => now(),
         ];
     }

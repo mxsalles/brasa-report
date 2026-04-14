@@ -18,7 +18,7 @@ class StoreAreaMonitoradaRequest extends FormRequest
     {
         return [
             'nome' => ['required', 'string', 'max:150'],
-            'geopackage' => ['required', 'file', 'extensions:gpkg', 'max:20480'],
+            'arquivo' => ['nullable', 'file', 'extensions:geojson,json,kml,zip,shp', 'max:51200'],
         ];
     }
 }

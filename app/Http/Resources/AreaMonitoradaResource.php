@@ -20,7 +20,7 @@ class AreaMonitoradaResource extends JsonResource
             'id' => $this->id,
             'nome' => $this->nome,
             'caminho_geopackage' => $this->caminho_geopackage,
-            'geometria_wkt' => $this->geometria_wkt,
+            'geometria_geojson' => $this->geometria_geojson,
             'importado_em' => $this->importado_em,
         ];
     }

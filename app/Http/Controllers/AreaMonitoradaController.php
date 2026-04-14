@@ -8,7 +8,7 @@ use App\Http\Resources\AreaMonitoradaResource;
 use App\Models\AreaMonitorada;
 use App\Models\LogAuditoria;
 use App\Models\Usuario;
-use App\Services\GeoPackageService;
+use App\Services\GeoConverterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,7 +19,7 @@ use Throwable;
 class AreaMonitoradaController extends Controller
 {
     public function __construct(
-        private GeoPackageService $geoPackageService
+        private readonly GeoConverterService $geoConverter
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -43,24 +43,39 @@ class AreaMonitoradaController extends Controller
 
     public function store(StoreAreaMonitoradaRequest $request): JsonResponse
     {
-        try {
-            $resultado = $this->geoPackageService->extrairWkt($request->file('geopackage'));
-        } catch (RuntimeException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 422);
-        } catch (Throwable $e) {
-            return response()->json([
-                'message' => 'Não foi possível processar o GeoPackage.',
-            ], 422);
+        $validado = $request->validated();
+
+        $atributos = [
+            'nome' => $validado['nome'],
+            'geometria_geojson' => null,
+            'caminho_geopackage' => null,
+        ];
+
+        if ($request->hasFile('arquivo')) {
+            try {
+                $atributos['geometria_geojson'] = $this->geoConverter->toGeoJson($request->file('arquivo'));
+            } catch (RuntimeException $e) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            } catch (Throwable) {
+                return response()->json([
+                    'message' => 'Não foi possível processar o arquivo geoespacial.',
+                ], 422);
+            }
+
+            $caminhoArmazenado = $request->file('arquivo')->store('geoarquivos', 'local');
+            if ($caminhoArmazenado === false) {
+                return response()->json([
+                    'message' => 'Não foi possível guardar o arquivo.',
+                ], 422);
+            }
+
+            $atributos['caminho_geopackage'] = $caminhoArmazenado;
+            $atributos['importado_em'] = now();
         }
 
-        $area = AreaMonitorada::query()->create([
-            'nome' => $request->validated()['nome'],
-            'caminho_geopackage' => $resultado['caminho'],
-            'geometria_wkt' => $resultado['wkt'],
-            'importado_em' => now(),
-        ]);
+        $area = AreaMonitorada::query()->create($atributos);
 
         /** @var Usuario $usuario */
         $usuario = $request->user();

@@ -184,7 +184,7 @@ test('test_retorna_409_ao_remover_local_com_incendios', function () {
     $area = AreaMonitorada::query()->create([
         'nome' => 'Área Teste',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
     $local = LocalCritico::factory()->create();

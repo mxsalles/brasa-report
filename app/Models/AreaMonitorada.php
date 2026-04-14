@@ -21,13 +21,16 @@ class AreaMonitorada extends Model
 
     public $incrementing = false;
 
+    /** Extensões aceitas para upload (referência para validação / UI). */
+    public const FORMATOS_ACEITOS = ['geojson', 'json', 'kml', 'shp', 'zip'];
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'nome',
         'caminho_geopackage',
-        'geometria_wkt',
+        'geometria_geojson',
         'importado_em',
     ];
 
@@ -38,6 +41,7 @@ class AreaMonitorada extends Model
     {
         return [
             'importado_em' => 'datetime',
+            'geometria_geojson' => 'array',
         ];
     }
 

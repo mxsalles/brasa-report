@@ -265,7 +265,7 @@ test('test_retorna_409_ao_remover_usuario_com_incendios', function () {
         'id' => $areaId,
         'nome' => 'Area X',
         'caminho_geopackage' => null,
-        'geometria_wkt' => 'POLYGON((0 0,1 0,1 1,0 1,0 0))',
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
 

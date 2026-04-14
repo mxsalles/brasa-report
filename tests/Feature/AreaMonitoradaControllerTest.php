@@ -6,7 +6,7 @@ use App\Models\AreaMonitorada;
 use App\Models\Incendio;
 use App\Models\LogAuditoria;
 use App\Models\Usuario;
-use App\Services\GeoPackageService;
+use App\Services\GeoConverterService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -26,7 +26,7 @@ test('test_lista_areas_monitoradas_paginadas', function () {
         AreaMonitorada::query()->create([
             'nome' => 'Área '.$i,
             'caminho_geopackage' => null,
-            'geometria_wkt' => null,
+            'geometria_geojson' => null,
             'importado_em' => now(),
         ]);
     }
@@ -42,13 +42,13 @@ test('test_filtra_areas_por_nome', function () {
     AreaMonitorada::query()->create([
         'nome' => 'Pantanal Norte',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
     AreaMonitorada::query()->create([
         'nome' => 'Cerrado Leste',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
 
@@ -66,8 +66,8 @@ test('test_index_requer_autenticacao', function () {
 test('test_retorna_area_monitorada', function () {
     $area = AreaMonitorada::query()->create([
         'nome' => 'Área Teste',
-        'caminho_geopackage' => 'geopackages/x.gpkg',
-        'geometria_wkt' => 'RAW',
+        'caminho_geopackage' => 'geoarquivos/x.zip',
+        'geometria_geojson' => ['type' => 'Point', 'coordinates' => [0, 0]],
         'importado_em' => now(),
     ]);
 
@@ -76,7 +76,7 @@ test('test_retorna_area_monitorada', function () {
     $response->assertOk()
         ->assertJsonPath('data.id', $area->id)
         ->assertJsonPath('data.nome', 'Área Teste')
-        ->assertJsonPath('data.geometria_wkt', 'RAW');
+        ->assertJsonPath('data.geometria_geojson.type', 'Point');
 });
 
 test('test_retorna_404_para_area_inexistente', function () {
@@ -86,43 +86,46 @@ test('test_retorna_404_para_area_inexistente', function () {
         ->assertNotFound();
 });
 
-test('test_cria_area_com_geopackage_valido', function () {
-    $this->mock(GeoPackageService::class, function ($mock): void {
-        $mock->shouldReceive('extrairWkt')
+test('test_cria_area_com_arquivo_geojson', function () {
+    $this->mock(GeoConverterService::class, function ($mock): void {
+        $mock->shouldReceive('toGeoJson')
             ->once()
             ->andReturn([
-                'wkt' => 'GEOM_BRUTA',
-                'caminho' => 'geopackages/abc.gpkg',
+                'type' => 'FeatureCollection',
+                'features' => [],
             ]);
     });
 
-    $file = UploadedFile::fake()->create('area.gpkg', 100);
+    $file = UploadedFile::fake()->create('area.geojson', 100);
 
     $response = $this->withHeaders(areaMonitoradaAuthHeaders())
         ->post('/api/areas-monitoradas', [
             'nome' => 'Nova Área Monitorada',
-            'geopackage' => $file,
+            'arquivo' => $file,
         ]);
 
     $response->assertCreated()
         ->assertJsonPath('data.nome', 'Nova Área Monitorada')
-        ->assertJsonPath('data.geometria_wkt', 'GEOM_BRUTA')
-        ->assertJsonPath('data.caminho_geopackage', 'geopackages/abc.gpkg');
+        ->assertJsonPath('data.geometria_geojson.type', 'FeatureCollection');
 
     $this->assertDatabaseHas('areas_monitoradas', [
         'nome' => 'Nova Área Monitorada',
-        'caminho_geopackage' => 'geopackages/abc.gpkg',
-        'geometria_wkt' => 'GEOM_BRUTA',
     ]);
 });
 
-test('test_retorna_422_sem_arquivo_geopackage', function () {
-    $this->withHeaders(areaMonitoradaAuthHeaders())
+test('test_cria_area_sem_arquivo', function () {
+    $response = $this->withHeaders(areaMonitoradaAuthHeaders())
         ->post('/api/areas-monitoradas', [
-            'nome' => 'Sem arquivo',
-        ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['geopackage']);
+            'nome' => 'Área sem geometria',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.nome', 'Área sem geometria')
+        ->assertJsonPath('data.geometria_geojson', null);
+
+    $this->assertDatabaseHas('areas_monitoradas', [
+        'nome' => 'Área sem geometria',
+    ]);
 });
 
 test('test_retorna_422_com_arquivo_de_tipo_invalido', function () {
@@ -131,29 +134,44 @@ test('test_retorna_422_com_arquivo_de_tipo_invalido', function () {
     $this->withHeaders(areaMonitoradaAuthHeaders())
         ->post('/api/areas-monitoradas', [
             'nome' => 'Com PDF',
-            'geopackage' => $file,
+            'arquivo' => $file,
         ])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['geopackage']);
+        ->assertJsonValidationErrors(['arquivo']);
+});
+
+test('test_retorna_422_quando_conversao_falha', function () {
+    $this->mock(GeoConverterService::class, function ($mock): void {
+        $mock->shouldReceive('toGeoJson')
+            ->once()
+            ->andThrow(new RuntimeException('Arquivo inválido'));
+    });
+
+    $file = UploadedFile::fake()->create('area.geojson', 100);
+
+    $this->withHeaders(areaMonitoradaAuthHeaders())
+        ->post('/api/areas-monitoradas', [
+            'nome' => 'Falha',
+            'arquivo' => $file,
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Arquivo inválido');
 });
 
 test('test_registra_log_de_auditoria_na_criacao', function () {
-    $this->mock(GeoPackageService::class, function ($mock): void {
-        $mock->shouldReceive('extrairWkt')
+    $this->mock(GeoConverterService::class, function ($mock): void {
+        $mock->shouldReceive('toGeoJson')
             ->once()
-            ->andReturn([
-                'wkt' => 'X',
-                'caminho' => 'geopackages/log.gpkg',
-            ]);
+            ->andReturn(['type' => 'Point', 'coordinates' => [1, 2]]);
     });
 
     $usuario = Usuario::factory()->create();
-    $file = UploadedFile::fake()->create('area.gpkg', 100);
+    $file = UploadedFile::fake()->create('area.geojson', 100);
 
     $this->withHeaders(areaMonitoradaAuthHeaders($usuario))
         ->post('/api/areas-monitoradas', [
             'nome' => 'Área Log',
-            'geopackage' => $file,
+            'arquivo' => $file,
         ])
         ->assertCreated();
 
@@ -175,7 +193,7 @@ test('test_atualiza_nome_da_area', function () {
     $area = AreaMonitorada::query()->create([
         'nome' => 'Nome Antigo',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
 
@@ -197,13 +215,13 @@ test('test_update_retorna_404_para_area_inexistente', function () {
 
 test('test_remove_area_sem_incendios', function () {
     Storage::fake('local');
-    $path = 'geopackages/para-remover.gpkg';
+    $path = 'geoarquivos/para-remover.zip';
     Storage::disk('local')->put($path, 'conteudo');
 
     $area = AreaMonitorada::query()->create([
         'nome' => 'Remover',
         'caminho_geopackage' => $path,
-        'geometria_wkt' => 'wkt',
+        'geometria_geojson' => ['type' => 'Point', 'coordinates' => [0, 0]],
         'importado_em' => now(),
     ]);
 
@@ -219,7 +237,7 @@ test('test_retorna_409_ao_remover_area_com_incendios', function () {
     $area = AreaMonitorada::query()->create([
         'nome' => 'Com incêndio',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
 
@@ -244,7 +262,7 @@ test('test_registra_log_de_auditoria_na_remocao', function () {
     $area = AreaMonitorada::query()->create([
         'nome' => 'Log remoção',
         'caminho_geopackage' => null,
-        'geometria_wkt' => null,
+        'geometria_geojson' => null,
         'importado_em' => now(),
     ]);
 
