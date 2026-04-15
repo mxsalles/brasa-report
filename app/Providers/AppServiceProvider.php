@@ -8,6 +8,7 @@ use App\Models\LeituraMeteorologica;
 use App\Models\Usuario;
 use Carbon\CarbonImmutable;
 use Database\Seeders\AreaMonitoradaSeeder;
+use Database\Seeders\UsuarioTesteSeeder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
@@ -42,6 +43,17 @@ class AppServiceProvider extends ServiceProvider
                 if (Schema::hasTable('areas_monitoradas') && AreaMonitorada::query()->doesntExist()) {
                     Artisan::call('db:seed', [
                         '--class' => AreaMonitoradaSeeder::class,
+                        '--no-interaction' => true,
+                    ]);
+                }
+
+                if (
+                    ! app()->isProduction()
+                    && Schema::hasTable('usuarios')
+                    && Usuario::query()->where('email', UsuarioTesteSeeder::EMAIL_TESTE)->doesntExist()
+                ) {
+                    Artisan::call('db:seed', [
+                        '--class' => UsuarioTesteSeeder::class,
                         '--no-interaction' => true,
                     ]);
                 }
