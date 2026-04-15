@@ -17,6 +17,18 @@ class UsuarioSeeder extends Seeder
         $senhaHash = Hash::make('password');
 
         Usuario::updateOrCreate(
+            ['email' => 'user@caninde.dev'],
+            [
+                'nome' => 'Usuário Teste',
+                'cpf' => '44444444444',
+                'senha_hash' => $senhaHash,
+                'funcao' => FuncaoUsuario::User,
+                'brigada_id' => null,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        Usuario::updateOrCreate(
             ['email' => 'brigadista@caninde.dev'],
             [
                 'nome' => 'Brigadista Teste',
@@ -46,7 +58,7 @@ class UsuarioSeeder extends Seeder
                 'nome' => 'Admin Teste',
                 'cpf' => '33333333333',
                 'senha_hash' => $senhaHash,
-                'funcao' => FuncaoUsuario::Admin,
+                'funcao' => FuncaoUsuario::Administrador,
                 'brigada_id' => null,
                 'email_verified_at' => now(),
             ]

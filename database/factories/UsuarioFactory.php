@@ -33,7 +33,7 @@ class UsuarioFactory extends Factory
             'email_verified_at' => null,
             'cpf' => fake()->unique()->numerify('###########'),
             'senha_hash' => static::$password ??= Hash::make('password'),
-            'funcao' => FuncaoUsuario::Brigadista,
+            'funcao' => FuncaoUsuario::User,
             'brigada_id' => null,
             'remember_token' => Str::random(10),
         ];
@@ -56,6 +56,46 @@ class UsuarioFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * @return $this
+     */
+    public function brigadista(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'funcao' => FuncaoUsuario::Brigadista,
+        ]);
+    }
+
+    /**
+     * @return $this
+     */
+    public function gestor(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'funcao' => FuncaoUsuario::Gestor,
+        ]);
+    }
+
+    /**
+     * @return $this
+     */
+    public function administrador(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'funcao' => FuncaoUsuario::Administrador,
+        ]);
+    }
+
+    /**
+     * @return $this
+     */
+    public function bloqueado(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'bloqueado' => true,
         ]);
     }
 }

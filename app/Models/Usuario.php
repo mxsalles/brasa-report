@@ -41,6 +41,7 @@ class Usuario extends Authenticatable implements MustVerifyEmail
         'senha_hash',
         'funcao',
         'brigada_id',
+        'bloqueado',
         'remember_token',
     ];
 
@@ -63,6 +64,7 @@ class Usuario extends Authenticatable implements MustVerifyEmail
         return [
             'senha_hash' => 'hashed',
             'funcao' => FuncaoUsuario::class,
+            'bloqueado' => 'boolean',
             'email_verified_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
         ];
