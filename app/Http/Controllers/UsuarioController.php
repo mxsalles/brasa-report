@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FuncaoUsuario;
 use App\Http\Requests\Usuario\AtualizarBrigadaRequest;
 use App\Http\Requests\Usuario\AtualizarFuncaoRequest;
 use App\Http\Requests\Usuario\StoreUsuarioRequest;
@@ -137,10 +138,25 @@ class UsuarioController extends Controller
         }
 
         $dados = $request->validated();
+        $novaFuncao = FuncaoUsuario::from($dados['funcao']);
+
+        if ($autor->funcao === FuncaoUsuario::Gestor) {
+            if (! in_array($novaFuncao, [FuncaoUsuario::User, FuncaoUsuario::Brigadista], true)) {
+                return response()->json([
+                    'message' => 'Gestores só podem definir a função como usuário ou brigadista.',
+                ], 403);
+            }
+
+            if (in_array($usuario->funcao, [FuncaoUsuario::Gestor, FuncaoUsuario::Administrador], true)) {
+                return response()->json([
+                    'message' => 'Gestores não podem alterar a função de outros gestores ou administradores.',
+                ], 403);
+            }
+        }
 
         $funcaoAnterior = $usuario->funcao->value;
         $usuario->update([
-            'funcao' => $dados['funcao'],
+            'funcao' => $novaFuncao,
         ]);
 
         LogAuditoria::query()->create([
@@ -150,15 +166,26 @@ class UsuarioController extends Controller
             'entidade_id' => $usuario->id,
             'dados_json' => [
                 'funcao_anterior' => $funcaoAnterior,
-                'funcao_nova' => $dados['funcao'],
+                'funcao_nova' => $novaFuncao->value,
             ],
         ]);
 
-        return new UsuarioResource($usuario->fresh());
+        return new UsuarioResource($usuario->fresh()->load('brigada'));
     }
 
-    public function atualizarBrigada(AtualizarBrigadaRequest $request, Usuario $usuario): UsuarioResource
+    public function atualizarBrigada(AtualizarBrigadaRequest $request, Usuario $usuario): JsonResponse|UsuarioResource
     {
+        /** @var Usuario $autor */
+        $autor = $request->user();
+
+        if ($autor->funcao === FuncaoUsuario::Gestor) {
+            if (in_array($usuario->funcao, [FuncaoUsuario::Gestor, FuncaoUsuario::Administrador], true)) {
+                return response()->json([
+                    'message' => 'Gestores não podem alterar a brigada de gestores ou administradores.',
+                ], 403);
+            }
+        }
+
         $dados = $request->validated();
 
         $usuario->update([
@@ -176,6 +203,40 @@ class UsuarioController extends Controller
             'dados_json' => null,
         ]);
 
-        return new UsuarioResource($usuario->fresh());
+        return new UsuarioResource($usuario->fresh()->load('brigada'));
+    }
+
+    public function alternarBloqueio(Request $request, Usuario $usuario): JsonResponse|UsuarioResource
+    {
+        /** @var Usuario $autor */
+        $autor = $request->user();
+
+        if ($usuario->id === $autor->id) {
+            return response()->json([
+                'message' => 'Não é permitido alterar o próprio bloqueio.',
+            ], 403);
+        }
+
+        if ($autor->funcao === FuncaoUsuario::Gestor) {
+            if (in_array($usuario->funcao, [FuncaoUsuario::Gestor, FuncaoUsuario::Administrador], true)) {
+                return response()->json([
+                    'message' => 'Gestores não podem alterar o bloqueio de gestores ou administradores.',
+                ], 403);
+            }
+        }
+
+        $usuario->update([
+            'bloqueado' => ! $usuario->bloqueado,
+        ]);
+
+        LogAuditoria::query()->create([
+            'usuario_id' => $autor->id,
+            'acao' => $usuario->bloqueado ? 'bloqueio_usuario' : 'desbloqueio_usuario',
+            'entidade_tipo' => 'usuarios',
+            'entidade_id' => $usuario->id,
+            'dados_json' => null,
+        ]);
+
+        return new UsuarioResource($usuario->fresh()->load('brigada'));
     }
 }

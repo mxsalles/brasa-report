@@ -17,7 +17,7 @@ class AtualizarFuncaoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'funcao' => ['required', 'in:brigadista,gestor,admin'],
+            'funcao' => ['required', 'in:user,brigadista,gestor,administrador'],
         ];
     }
 }

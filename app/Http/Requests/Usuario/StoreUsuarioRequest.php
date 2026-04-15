@@ -21,7 +21,7 @@ class StoreUsuarioRequest extends FormRequest
             'email' => ['required', 'email', 'unique:usuarios,email'],
             'cpf' => ['required', 'string', 'size:11', 'unique:usuarios,cpf'],
             'senha' => ['required', 'string', 'min:8', 'confirmed'],
-            'funcao' => ['required', 'in:brigadista,gestor,admin'],
+            'funcao' => ['required', 'in:user,brigadista,gestor,administrador'],
             'brigada_id' => ['nullable', 'uuid', 'exists:brigadas,id'],
         ];
     }

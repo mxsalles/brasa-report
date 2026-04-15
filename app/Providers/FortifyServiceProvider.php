@@ -70,6 +70,10 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
+            if ($user->bloqueado) {
+                return null;
+            }
+
             return $user;
         });
     }

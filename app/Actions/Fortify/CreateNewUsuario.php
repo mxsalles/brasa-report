@@ -39,7 +39,7 @@ class CreateNewUsuario implements CreatesNewUsers
             'email' => $input['email'],
             'cpf' => $input['cpf'],
             'senha_hash' => $input['password'],
-            'funcao' => FuncaoUsuario::Brigadista,
+            'funcao' => FuncaoUsuario::User,
         ]);
     }
 }

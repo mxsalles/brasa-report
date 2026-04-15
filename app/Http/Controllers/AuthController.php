@@ -26,6 +26,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($usuario->bloqueado) {
+            return response()->json([
+                'message' => 'Conta bloqueada.',
+            ], 403);
+        }
+
         /** @var Usuario $usuario */
         LogAuditoria::query()->create([
             'usuario_id' => $usuario->id,

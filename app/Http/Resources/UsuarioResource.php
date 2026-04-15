@@ -37,6 +37,8 @@ class UsuarioResource extends JsonResource
             'email' => $this->email,
             'funcao' => $this->funcao->value,
             'brigada_id' => $this->brigada_id,
+            'brigada_nome' => $this->whenLoaded('brigada', fn () => $this->brigada?->nome),
+            'bloqueado' => $this->bloqueado,
             'criado_em' => $this->criado_em,
         ];
     }
