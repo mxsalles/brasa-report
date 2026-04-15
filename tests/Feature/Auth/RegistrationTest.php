@@ -72,21 +72,21 @@ test('email duplicado retorna erro', function () {
     $this->assertGuest();
 });
 
-test('funcao padrao e brigadista', function () {
+test('funcao padrao e user', function () {
     Notification::fake();
 
     $this->post(route('register.store'), [
-        'nome' => 'Novo Brigadista',
-        'email' => 'brigadista@example.com',
+        'nome' => 'Novo Usuário',
+        'email' => 'novo@example.com',
         'cpf' => '11122233344',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
-    $usuario = Usuario::query()->where('email', 'brigadista@example.com')->first();
+    $usuario = Usuario::query()->where('email', 'novo@example.com')->first();
 
     expect($usuario)->not->toBeNull();
-    expect($usuario->funcao)->toBe(FuncaoUsuario::Brigadista);
+    expect($usuario->funcao)->toBe(FuncaoUsuario::User);
 });
 
 test('email de verificacao enviado apos registro', function () {

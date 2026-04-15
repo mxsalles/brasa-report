@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 
 function deteccaoSateliteAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -138,7 +138,7 @@ test('test_retorna_422_com_coordenadas_invalidas', function () {
 });
 
 test('test_registra_log_de_auditoria_na_ingestao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
 
     $this->postJson('/api/deteccoes-satelite', [
         'latitude' => -16.5,
@@ -241,7 +241,7 @@ test('test_lote_falha_atomicamente_se_item_invalido', function () {
 });
 
 test('test_registra_log_de_auditoria_com_total_do_lote', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
 
     $payload = [
         'deteccoes' => [

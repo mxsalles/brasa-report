@@ -25,6 +25,7 @@ test('test_login_com_credenciais_validas_retorna_token', function () {
                 'email',
                 'funcao',
                 'brigada_id',
+                'bloqueado',
                 'criado_em',
             ],
         ])
@@ -170,4 +171,19 @@ test('test_me_nao_expoe_cpf', function () {
 
 test('test_me_sem_autenticacao_retorna_401', function () {
     $this->getJson('/api/auth/me')->assertUnauthorized();
+});
+
+test('test_login_usuario_bloqueado_retorna_403', function () {
+    $usuario = Usuario::factory()->create([
+        'senha_hash' => Hash::make('senha12345'),
+        'bloqueado' => true,
+    ]);
+
+    $this->postJson('/api/auth/login', [
+        'email' => $usuario->email,
+        'senha' => 'senha12345',
+    ])->assertForbidden()
+        ->assertJson([
+            'message' => 'Conta bloqueada.',
+        ]);
 });

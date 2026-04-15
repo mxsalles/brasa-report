@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 function areaMonitoradaAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -165,7 +165,7 @@ test('test_registra_log_de_auditoria_na_criacao', function () {
             ->andReturn(['type' => 'Point', 'coordinates' => [1, 2]]);
     });
 
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
     $file = UploadedFile::fake()->create('area.geojson', 100);
 
     $this->withHeaders(areaMonitoradaAuthHeaders($usuario))
@@ -233,7 +233,7 @@ test('test_remove_area_sem_incendios', function () {
 });
 
 test('test_retorna_409_ao_remover_area_com_incendios', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
     $area = AreaMonitorada::query()->create([
         'nome' => 'Com incêndio',
         'caminho_geopackage' => null,
@@ -258,7 +258,7 @@ test('test_retorna_409_ao_remover_area_com_incendios', function () {
 });
 
 test('test_registra_log_de_auditoria_na_remocao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
     $area = AreaMonitorada::query()->create([
         'nome' => 'Log remoção',
         'caminho_geopackage' => null,

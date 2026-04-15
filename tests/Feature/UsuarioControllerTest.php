@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 function usuarioAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -18,7 +18,7 @@ function usuarioAuthHeaders(?Usuario $usuario = null): array
 }
 
 test('test_lista_usuarios_paginados', function () {
-    $autor = Usuario::factory()->create();
+    $autor = Usuario::factory()->administrador()->create();
     Usuario::factory()->count(24)->create();
 
     $response = $this->getJson('/api/usuarios', usuarioAuthHeaders($autor));
@@ -30,13 +30,13 @@ test('test_lista_usuarios_paginados', function () {
 
 test('test_filtra_usuarios_por_funcao', function () {
     Usuario::factory()->create(['funcao' => 'brigadista']);
-    Usuario::factory()->create(['funcao' => 'admin']);
+    Usuario::factory()->administrador()->create();
 
-    $response = $this->getJson('/api/usuarios?funcao=admin', usuarioAuthHeaders());
+    $response = $this->getJson('/api/usuarios?funcao=administrador', usuarioAuthHeaders());
 
     $response->assertOk();
-    expect($response->json('data'))->toHaveCount(1)
-        ->and($response->json('data.0.funcao'))->toBe('admin');
+    expect($response->json('data'))->toHaveCount(2)
+        ->and(collect($response->json('data'))->pluck('funcao')->unique()->all())->toBe(['administrador']);
 });
 
 test('test_filtra_usuarios_por_brigada', function () {
@@ -170,7 +170,7 @@ test('test_senha_e_armazenada_como_hash', function () {
 });
 
 test('test_registra_log_de_auditoria_na_criacao', function () {
-    $autor = Usuario::factory()->create();
+    $autor = Usuario::factory()->administrador()->create();
 
     $this->postJson('/api/usuarios', [
         'nome' => 'X',
@@ -178,7 +178,7 @@ test('test_registra_log_de_auditoria_na_criacao', function () {
         'cpf' => '11122233344',
         'senha' => 'senha12345',
         'senha_confirmation' => 'senha12345',
-        'funcao' => 'admin',
+        'funcao' => 'administrador',
         'brigada_id' => null,
     ], usuarioAuthHeaders($autor))->assertCreated();
 
@@ -227,7 +227,7 @@ test('test_update_ignora_campo_funcao', function () {
 
     $this->putJson('/api/usuarios/'.$usuario->id, [
         'nome' => 'Nome Novo',
-        'funcao' => 'admin',
+        'funcao' => 'administrador',
     ], usuarioAuthHeaders())->assertOk();
 
     expect($usuario->fresh()->funcao->value)->toBe('brigadista');
@@ -297,7 +297,7 @@ test('test_revoga_tokens_sanctum_ao_remover_usuario', function () {
 });
 
 test('test_registra_log_de_auditoria_na_remocao', function () {
-    $autor = Usuario::factory()->create();
+    $autor = Usuario::factory()->administrador()->create();
     $alvo = Usuario::factory()->create();
 
     $this->deleteJson('/api/usuarios/'.$alvo->id, [], usuarioAuthHeaders($autor))
@@ -325,7 +325,7 @@ test('test_atualiza_funcao_do_usuario', function () {
 });
 
 test('test_retorna_403_ao_alterar_propria_funcao', function () {
-    $autor = Usuario::factory()->create(['funcao' => 'admin']);
+    $autor = Usuario::factory()->administrador()->create();
 
     $this->patchJson('/api/usuarios/'.$autor->id.'/funcao', [
         'funcao' => 'brigadista',
@@ -334,10 +334,10 @@ test('test_retorna_403_ao_alterar_propria_funcao', function () {
 
 test('test_registra_funcao_anterior_e_nova_no_log', function () {
     $alvo = Usuario::factory()->create(['funcao' => 'brigadista']);
-    $autor = Usuario::factory()->create(['funcao' => 'admin']);
+    $autor = Usuario::factory()->administrador()->create();
 
     $this->patchJson('/api/usuarios/'.$alvo->id.'/funcao', [
-        'funcao' => 'admin',
+        'funcao' => 'administrador',
     ], usuarioAuthHeaders($autor))->assertOk();
 
     $log = LogAuditoria::query()
@@ -349,7 +349,7 @@ test('test_registra_funcao_anterior_e_nova_no_log', function () {
     expect($log)->not->toBeNull()
         ->and($log->dados_json)->toHaveKeys(['funcao_anterior', 'funcao_nova'])
         ->and($log->dados_json['funcao_anterior'])->toBe('brigadista')
-        ->and($log->dados_json['funcao_nova'])->toBe('admin');
+        ->and($log->dados_json['funcao_nova'])->toBe('administrador');
 });
 
 test('test_vincula_usuario_a_brigada', function () {
@@ -385,4 +385,47 @@ test('test_retorna_422_com_brigada_inexistente', function () {
     ], usuarioAuthHeaders())
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['brigada_id']);
+});
+
+test('gestor pode alterar funcao para brigadista', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $alvo = Usuario::factory()->create(['funcao' => 'user']);
+
+    $this->patchJson('/api/usuarios/'.$alvo->id.'/funcao', [
+        'funcao' => 'brigadista',
+    ], usuarioAuthHeaders($gestor))->assertOk()
+        ->assertJsonPath('data.funcao', 'brigadista');
+});
+
+test('gestor nao pode promover a administrador', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $alvo = Usuario::factory()->create(['funcao' => 'user']);
+
+    $this->patchJson('/api/usuarios/'.$alvo->id.'/funcao', [
+        'funcao' => 'administrador',
+    ], usuarioAuthHeaders($gestor))->assertForbidden();
+});
+
+test('gestor nao pode alterar funcao de outro gestor', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $alvo = Usuario::factory()->gestor()->create();
+
+    $this->patchJson('/api/usuarios/'.$alvo->id.'/funcao', [
+        'funcao' => 'brigadista',
+    ], usuarioAuthHeaders($gestor))->assertForbidden();
+});
+
+test('administrador pode alternar bloqueio de usuario', function () {
+    $admin = Usuario::factory()->administrador()->create();
+    $alvo = Usuario::factory()->create(['bloqueado' => false]);
+
+    $this->patchJson('/api/usuarios/'.$alvo->id.'/bloqueio', [], usuarioAuthHeaders($admin))->assertOk()
+        ->assertJsonPath('data.bloqueado', true);
+});
+
+test('nao pode alternar proprio bloqueio', function () {
+    $admin = Usuario::factory()->administrador()->create();
+
+    $this->patchJson('/api/usuarios/'.$admin->id.'/bloqueio', [], usuarioAuthHeaders($admin))
+        ->assertForbidden();
 });

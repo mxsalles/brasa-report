@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 function leituraMeteorologicaAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->brigadista()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -120,7 +120,7 @@ test('test_retorna_404_para_leitura_inexistente', function () {
 
 test('test_registra_leitura_para_incendio', function () {
     $incendio = Incendio::factory()->create();
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
 
     $response = $this->postJson(
         '/api/incendios/'.$incendio->id.'/leituras',
@@ -213,7 +213,7 @@ test('test_nao_gera_alerta_em_condicoes_normais', function () {
 });
 
 test('test_registra_log_de_auditoria', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $incendio = Incendio::factory()->create();
 
     $response = $this->postJson(

@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 function despachoBrigadaAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -192,7 +192,7 @@ test('test_retorna_409_se_brigada_ja_despachada_para_incendio', function () {
 });
 
 test('test_registra_log_de_auditoria', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->gestor()->create();
     $incendio = Incendio::factory()->create();
     $brigada = Brigada::factory()->create();
 
@@ -249,7 +249,7 @@ test('test_retorna_422_se_chegada_ja_registrada', function () {
 });
 
 test('test_registra_log_de_auditoria_na_chegada', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $incendio = Incendio::factory()->create();
     $despacho = DespachoBrigada::factory()->create([
         'incendio_id' => $incendio->id,
@@ -348,7 +348,7 @@ test('test_retorna_422_se_despacho_ja_finalizado', function () {
 });
 
 test('test_registra_log_de_auditoria_na_finalizacao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $incendio = Incendio::factory()->create();
     $despacho = DespachoBrigada::factory()->create([
         'incendio_id' => $incendio->id,

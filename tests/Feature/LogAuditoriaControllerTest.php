@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 
 function usuarioAuthHeadersLogAuditoria(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,

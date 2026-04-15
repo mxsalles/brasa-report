@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 function alertaAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->brigadista()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -114,7 +114,7 @@ test('test_retorna_422_se_alerta_ja_entregue', function () {
 });
 
 test('test_registra_log_de_auditoria', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $alerta = Alerta::factory()->create(['entregue' => false]);
 
     $this->patchJson('/api/alertas/'.$alerta->id.'/entregue', [], alertaAuthHeaders($usuario))

@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 function incendioAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -103,7 +103,7 @@ test('test_retorna_404_para_incendio_inexistente', function () {
 });
 
 test('test_registra_incendio_com_dados_validos', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $area = AreaMonitorada::factory()->create();
 
     $response = $this->postJson('/api/incendios', [
@@ -121,7 +121,7 @@ test('test_registra_incendio_com_dados_validos', function () {
 });
 
 test('test_usuario_id_preenchido_automaticamente', function () {
-    $autenticado = Usuario::factory()->create();
+    $autenticado = Usuario::factory()->brigadista()->create();
     $outro = Usuario::factory()->create();
     $area = AreaMonitorada::factory()->create();
 
@@ -139,7 +139,7 @@ test('test_usuario_id_preenchido_automaticamente', function () {
 });
 
 test('test_status_inicial_sempre_ativo', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $area = AreaMonitorada::factory()->create();
 
     $response = $this->postJson('/api/incendios', [
@@ -156,7 +156,7 @@ test('test_status_inicial_sempre_ativo', function () {
 });
 
 test('test_retorna_422_sem_area_id', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
 
     $this->postJson('/api/incendios', [
         'latitude' => -16.5,
@@ -168,7 +168,7 @@ test('test_retorna_422_sem_area_id', function () {
 });
 
 test('test_retorna_422_com_area_inexistente', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $areaId = (string) Str::uuid();
 
     $this->postJson('/api/incendios', [
@@ -182,7 +182,7 @@ test('test_retorna_422_com_area_inexistente', function () {
 });
 
 test('test_registra_log_de_auditoria_no_registro', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->brigadista()->create();
     $area = AreaMonitorada::factory()->create();
 
     $response = $this->postJson('/api/incendios', [
@@ -272,7 +272,7 @@ test('test_atualiza_status_do_incendio', function () {
 });
 
 test('test_registra_status_anterior_e_novo_no_log', function () {
-    $autor = Usuario::factory()->create();
+    $autor = Usuario::factory()->brigadista()->create();
     $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
 
     $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
@@ -315,7 +315,7 @@ test('test_atualiza_nivel_de_risco', function () {
 });
 
 test('test_registra_risco_anterior_e_novo_no_log', function () {
-    $autor = Usuario::factory()->create();
+    $autor = Usuario::factory()->gestor()->create();
     $incendio = Incendio::factory()->create(['nivel_risco' => NivelRiscoIncendio::Medio]);
 
     $this->patchJson('/api/incendios/'.$incendio->id.'/risco', [

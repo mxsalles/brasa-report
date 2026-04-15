@@ -23,18 +23,24 @@ test('authenticated users can visit operacao routes', function () {
     $user = Usuario::factory()->verified()->create();
     $this->actingAs($user);
 
-    foreach (
-        [
-            'mapa',
-            'registrar-incendio',
-            'alertas',
-            'brigadas',
-            'administracao',
-        ] as $name
-    ) {
+    foreach (['mapa', 'registrar-incendio', 'alertas', 'brigadas'] as $name) {
         $response = $this->get(route($name));
         $response->assertOk();
     }
+});
+
+test('administracao is forbidden for usuario comum', function () {
+    $user = Usuario::factory()->verified()->create();
+    $this->actingAs($user);
+
+    $this->get(route('administracao'))->assertForbidden();
+});
+
+test('gestor pode visitar administracao', function () {
+    $user = Usuario::factory()->verified()->gestor()->create();
+    $this->actingAs($user);
+
+    $this->get(route('administracao'))->assertOk();
 });
 
 test('registrar incendio passes areaPadrao id when Pantanal Geral exists', function () {

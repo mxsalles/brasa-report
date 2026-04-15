@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 function brigadaAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -88,7 +88,7 @@ test('test_retorna_422_com_dados_invalidos', function () {
 });
 
 test('test_registra_log_de_auditoria_na_criacao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
 
     $this->postJson('/api/brigadas', [
         'nome' => 'Nova Brigada',
@@ -149,7 +149,7 @@ test('test_retorna_409_ao_remover_brigada_com_membros', function () {
 });
 
 test('test_registra_log_de_auditoria_na_remocao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
     $brigada = Brigada::factory()->create();
 
     $this->deleteJson('/api/brigadas/'.$brigada->id, [], brigadaAuthHeaders($usuario))

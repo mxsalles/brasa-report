@@ -12,7 +12,7 @@ test('api areas monitoradas autentica com sessao web e referer stateful', functi
         'sanctum.stateful' => explode(',', 'localhost,127.0.0.1,localhost:8000,127.0.0.1:8000'),
     ]);
 
-    $usuario = Usuario::factory()->verified()->create();
+    $usuario = Usuario::factory()->verified()->gestor()->create();
     AreaMonitorada::factory()->create(['nome' => 'Pantanal Geral']);
 
     $baseUrl = rtrim((string) config('app.url'), '/');

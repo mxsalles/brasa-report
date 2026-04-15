@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 function localCriticoAuthHeaders(?Usuario $usuario = null): array
 {
-    $usuario ??= Usuario::factory()->create();
+    $usuario ??= Usuario::factory()->administrador()->create();
 
     return [
         'Authorization' => 'Bearer '.$usuario->createToken('test')->plainTextToken,
@@ -124,7 +124,7 @@ test('test_retorna_422_com_coordenadas_invalidas', function () {
 });
 
 test('test_registra_log_de_auditoria_na_criacao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
 
     $this->postJson('/api/locais-criticos', [
         'nome' => 'Local Log',
@@ -207,7 +207,7 @@ test('test_retorna_409_ao_remover_local_com_incendios', function () {
 });
 
 test('test_registra_log_de_auditoria_na_remocao', function () {
-    $usuario = Usuario::factory()->create();
+    $usuario = Usuario::factory()->administrador()->create();
     $local = LocalCritico::factory()->create();
 
     $this->deleteJson('/api/locais-criticos/'.$local->id, [], localCriticoAuthHeaders($usuario))
