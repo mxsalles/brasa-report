@@ -47,15 +47,19 @@ class AppServiceProvider extends ServiceProvider
                     ]);
                 }
 
-                if (
-                    ! app()->isProduction()
-                    && Schema::hasTable('usuarios')
-                    && Usuario::query()->where('email', UsuarioTesteSeeder::EMAIL_TESTE)->doesntExist()
-                ) {
-                    Artisan::call('db:seed', [
-                        '--class' => UsuarioTesteSeeder::class,
-                        '--no-interaction' => true,
-                    ]);
+                if (! app()->isProduction() && Schema::hasTable('usuarios')) {
+                    $emailsContasDev = [
+                        UsuarioTesteSeeder::EMAIL_TESTE,
+                        UsuarioTesteSeeder::EMAIL_GESTOR_TESTE,
+                        UsuarioTesteSeeder::EMAIL_ADMINISTRADOR_TESTE,
+                    ];
+                    $cadastrados = Usuario::query()->whereIn('email', $emailsContasDev)->count();
+                    if ($cadastrados < count($emailsContasDev)) {
+                        Artisan::call('db:seed', [
+                            '--class' => UsuarioTesteSeeder::class,
+                            '--no-interaction' => true,
+                        ]);
+                    }
                 }
             } catch (QueryException) {
                 //
