@@ -49,8 +49,11 @@ type LogLinha = {
 
 type Paginated<T> = {
     data: T[];
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
     links: unknown;
-    meta: { total?: number; per_page?: number; current_page?: number };
 };
 
 type PageProps = {
@@ -233,15 +236,15 @@ export default function Administracao() {
                                 />
                             </div>
                             <span className="text-sm text-muted-foreground">
-                                {usuariosFiltrados.length} usuário(s) (página{' '}
-                                {usuarios.meta.current_page ?? 1} de{' '}
-                                {Math.max(
-                                    1,
-                                    Math.ceil(
-                                        (usuarios.meta.total ?? 0) /
-                                            (usuarios.meta.per_page ?? 20),
-                                    ),
-                                )}
+                            {usuariosFiltrados.length} usuário(s) (página{' '}
+                            {usuarios.current_page ?? 1} de{' '}
+                            {Math.max(
+                                1,
+                                Math.ceil(
+                                    (usuarios.total ?? 0) /
+                                        (usuarios.per_page ?? 20),
+                                ),
+                            )}
                                 )
                             </span>
                         </div>
