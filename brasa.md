@@ -63,6 +63,7 @@ Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful
 - **Promoção de papéis:** exclusiva do `admin` via `PATCH /api/usuarios/{usuario}/funcao`
 - **API mobile (futuro):** `AuthController` com Sanctum mantido intacto em `app/Http/Controllers/AuthController.php`
 - **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
+- **Política de senha (produção):** em `APP_ENV=production`, `Password::defaults()` em `app/Providers/AppServiceProvider.php` (`configureDefaults`) exige apenas **mínimo de 8 caracteres** — sem obrigatoriedade de maiúsculas/minúsculas mistas, números, símbolos nem verificação de senhas vazadas (`uncompromised`). Fora de produção, o callback devolve `null` e o Laravel usa o padrão do framework. Regras de nova senha e confirmação continuam centralizadas na trait `PasswordValidationRules` com `Password::default()`.
 - **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `caninde.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
 
 ---
@@ -344,6 +345,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | Testes de dashboard                | `tests/Feature/DashboardControllerTest.php`                                    | —                                                     |
 | Arquivos de idioma pt_BR          | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php`     | Validação, auth, senhas, paginação traduzidos          |
 | Teste de locale                   | `tests/Unit/AppLocaleTest.php`                                                 | Garante locale/fallback/faker = pt_BR                  |
+| Teste de política de senha        | `tests/Unit/PasswordPolicyTest.php`                                            | Produção: mínimo 8 caracteres sem regras de complexidade |
 
 ---
 
