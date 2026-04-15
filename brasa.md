@@ -46,7 +46,7 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 ### Rotas alinhadas ao protótipo Canindé
 
 **Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`).
-**Páginas ainda com mock:** mapa, alertas, brigadas, administracao.
+**Páginas ainda com mock:** mapa, alertas, brigadas. **Administração** usa dados reais (Inertia + API para alterações).
 
 As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Dados auxiliares em `resources/js/data/operacoes-mock.ts` e mapa com **Leaflet** onde ainda mock.
 
@@ -57,14 +57,14 @@ Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful
 ## Autenticação web
 
 - **Engine:** Laravel Fortify + sessão (guard `web`)
-- **Registro:** público, `funcao = 'brigadista'` por padrão
+- **Registro:** público, `funcao = 'user'` por padrão — promoção a brigadista/gestor/administrador por gestor ou administrador
 - **Verificação de email:** obrigatória — middleware `verified` em todas as rotas do app
 - **Mailer:** Mailpit (`localhost:1025`) em desenvolvimento
-- **Promoção de papéis:** exclusiva do `admin` via `PATCH /api/usuarios/{usuario}/funcao`
+- **Promoção de papéis:** `PATCH /api/usuarios/{usuario}/funcao` — gestores só podem definir `user` ou `brigadista`; apenas administradores podem definir `gestor` ou `administrador`. Conta bloqueada (`bloqueado`) impede login e APIs autenticadas.
 - **API mobile (futuro):** `AuthController` com Sanctum mantido intacto em `app/Http/Controllers/AuthController.php`
 - **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
 - **Política de senha (produção):** em `APP_ENV=production`, `Password::defaults()` em `app/Providers/AppServiceProvider.php` (`configureDefaults`) exige apenas **mínimo de 8 caracteres** — sem obrigatoriedade de maiúsculas/minúsculas mistas, números, símbolos nem verificação de senhas vazadas (`uncompromised`). Fora de produção, o callback devolve `null` e o Laravel usa o padrão do framework. Regras de nova senha e confirmação continuam centralizadas na trait `PasswordValidationRules` com `Password::default()`.
-- **Usuário de teste (não produção):** `UsuarioTesteSeeder` garante um utilizador fixo para desenvolvimento (email `teste@gmail.com`, nome «Teste», CPF `12345678954` — equivalente a `123.456.789.54` só com dígitos; senha em texto plano definida no próprio seeder e persistida com `Hash::make`). Semeado no arranque da aplicação por `AppServiceProvider` quando a tabela `usuarios` existe e esse email ainda não existe (mesmo padrão do `AreaMonitoradaSeeder`); também invocado por `DatabaseSeeder`. O seeder não executa em `APP_ENV=production`.
+- **Utilizadores de teste (não produção):** `UsuarioTesteSeeder` garante três contas para desenvolvimento (todos com senha `12345678` em texto plano no seeder, persistida com `Hash::make`): brigadista `teste@gmail.com` (CPF `12345678954`, nome «Teste»); gestor `gestor@gmail.com`; administrador `admin@gmail.com`. Semeado no arranque da aplicação por `AppServiceProvider` quando a tabela `usuarios` existe e o email ainda não existe (mesmo padrão do `AreaMonitoradaSeeder`); também invocado por `DatabaseSeeder`. O seeder não executa em `APP_ENV=production`.
 - **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `caninde.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
 
 ---
@@ -186,6 +186,8 @@ usuarios
   ├── incendios (1:N via usuario_id — quem registrou)
   └── logs_auditoria (1:N via usuario_id nullable)
 
+Coluna `bloqueado` (boolean, default false) em `usuarios` — bloqueio operacional; não confundir com exclusão de conta.
+
 areas_monitoradas
   └── incendios (1:N via area_id — OBRIGATÓRIO)
 
@@ -206,7 +208,7 @@ alertas — polimórfica
 ### ENUMs PostgreSQL
 
 ```sql
-funcao_usuario:     brigadista | gestor | admin
+funcao_usuario:     user | brigadista | gestor | administrador
 nivel_risco:        alto | medio | baixo
 status_incendio:    ativo | contido | resolvido
 tipo_local_critico: residencia | escola | infraestrutura
@@ -236,7 +238,7 @@ tipo_alerta:        temperatura_alta | umidade_baixa | fogo_detectado | proximid
 ```php
 // modo completo (padrão) — usado em AuthController e UsuarioController
 new UsuarioResource($usuario)
-// → expõe: id, nome, email, funcao, brigada_id, criado_em
+// → expõe: id, nome, email, funcao, brigada_id, brigada_nome (se relação carregada), bloqueado, criado_em
 
 // modo restrito — usado em BrigadaResource ao listar membros
 new UsuarioResource($usuario, true)
@@ -397,7 +399,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | 9     | `LeituraMeteorologicaController` | 3     | `Incendio`                                                      |
 | 10    | `DespachoBrigadaController`      | 4     | `Incendio`, `Brigada`                                           |
 | 11    | `AlertaController`               | 4     | — (somente leitura + patch)                                     |
-| 12    | `LogAuditoriaController`         | 4     | — (somente leitura, admin only)                                 |
+| 12    | `LogAuditoriaController`         | 4     | — (somente leitura, administrador only)                         |
 
 ---
 
@@ -411,6 +413,11 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 
 Registra log de auditoria em login e logout.
 Token Sanctum stateless. Campos sensíveis nunca expostos nas respostas.
+Login API recusa conta com `bloqueado = true` (403).
+
+### DashboardController (API)
+
+- `GET /api/dashboard` — auth:sanctum (user, brigadista, gestor, administrador)
 
 ### PasswordResetController
 
@@ -423,25 +430,25 @@ para não revelar existência de conta. Todos os tokens Sanctum revogados após 
 
 ### BrigadaController
 
-- `GET    /api/brigadas` — auth:sanctum (gestor, admin)
-- `POST   /api/brigadas` — auth:sanctum (admin)
-- `GET    /api/brigadas/{brigada}` — auth:sanctum (gestor, admin)
-- `PUT    /api/brigadas/{brigada}` — auth:sanctum (admin)
-- `DELETE /api/brigadas/{brigada}` — auth:sanctum (admin)
-- `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, admin)
+- `GET    /api/brigadas` — auth:sanctum (gestor, administrador)
+- `POST   /api/brigadas` — auth:sanctum (administrador)
+- `GET    /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
+- `PUT    /api/brigadas/{brigada}` — auth:sanctum (administrador)
+- `DELETE /api/brigadas/{brigada}` — auth:sanctum (administrador)
+- `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, administrador)
 
 Bloqueia remoção de brigada com membros vinculados (409).
 Log de auditoria em criação, atualização, remoção e atualização de localização.
-Controle de papel via middleware — pendente implementação do middleware de papéis.
+Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 Membros listados via `UsuarioResource` em modo restrito (`$somenteMembroBrigada = true`).
 
 ### AreaMonitoradaController
 
-- `GET    /api/areas-monitoradas` — auth:sanctum (gestor, admin)
-- `POST   /api/areas-monitoradas` — auth:sanctum (admin)
-- `GET    /api/areas-monitoradas/{area}` — auth:sanctum (gestor, admin)
-- `PUT    /api/areas-monitoradas/{area}` — auth:sanctum (admin)
-- `DELETE /api/areas-monitoradas/{area}` — auth:sanctum (admin)
+- `GET    /api/areas-monitoradas` — auth:sanctum (gestor, administrador)
+- `POST   /api/areas-monitoradas` — auth:sanctum (administrador)
+- `GET    /api/areas-monitoradas/{area}` — auth:sanctum (gestor, administrador)
+- `PUT    /api/areas-monitoradas/{area}` — auth:sanctum (administrador)
+- `DELETE /api/areas-monitoradas/{area}` — auth:sanctum (administrador)
 
 Upload opcional (`arquivo`): GeoJSON, KML ou ZIP com shapefile — normalizado para GeoJSON (`geometria_geojson`, `longText`) via `GeoConverterService` (phayes/geophp, gasparesganga/php-shapefile).
 Bloqueia remoção de área com incêndios vinculados (409).
@@ -450,43 +457,48 @@ Log de auditoria em criação, atualização e remoção.
 
 ### LocalCriticoController
 
-- `GET    /api/locais-criticos` — auth:sanctum (gestor, admin)
-- `POST   /api/locais-criticos` — auth:sanctum (admin)
-- `GET    /api/locais-criticos/{local}` — auth:sanctum (gestor, admin)
-- `PUT    /api/locais-criticos/{local}` — auth:sanctum (admin)
-- `DELETE /api/locais-criticos/{local}` — auth:sanctum (admin)
+- `GET    /api/locais-criticos` — auth:sanctum (gestor, administrador)
+- `POST   /api/locais-criticos` — auth:sanctum (administrador)
+- `GET    /api/locais-criticos/{local}` — auth:sanctum (gestor, administrador)
+- `PUT    /api/locais-criticos/{local}` — auth:sanctum (administrador)
+- `DELETE /api/locais-criticos/{local}` — auth:sanctum (administrador)
 
 Tabela independente — sem FK de saída.
 Bloqueia remoção de local com incêndios vinculados (409).
 Filtros por tipo e nome em index.
 Cálculo de distância é responsabilidade do client — não implementado no backend.
 Log de auditoria em criação, atualização e remoção.
-Controle de papel via middleware — pendente implementação do middleware de papéis.
+Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 ### UsuarioController
 
-- `GET    /api/usuarios` — auth:sanctum (admin)
-- `POST   /api/usuarios` — auth:sanctum (admin)
-- `GET    /api/usuarios/{usuario}` — auth:sanctum (admin)
-- `PUT    /api/usuarios/{usuario}` — auth:sanctum (admin)
-- `DELETE /api/usuarios/{usuario}` — auth:sanctum (admin)
-- `PATCH  /api/usuarios/{usuario}/funcao` — auth:sanctum (admin)
-- `PATCH  /api/usuarios/{usuario}/brigada` — auth:sanctum (admin, gestor)
+- `GET    /api/usuarios` — auth:sanctum (administrador)
+- `POST   /api/usuarios` — auth:sanctum (administrador)
+- `GET    /api/usuarios/{usuario}` — auth:sanctum (administrador)
+- `PUT    /api/usuarios/{usuario}` — auth:sanctum (administrador)
+- `DELETE /api/usuarios/{usuario}` — auth:sanctum (administrador)
+- `PATCH  /api/usuarios/{usuario}/funcao` — auth:sanctum (gestor, administrador) — gestor só `user`/`brigadista` e não altera outros gestores/administradores
+- `PATCH  /api/usuarios/{usuario}/brigada` — auth:sanctum (gestor, administrador) — gestor não altera brigada de gestores/administradores
+- `PATCH  /api/usuarios/{usuario}/bloqueio` — auth:sanctum (gestor, administrador) — gestor não altera bloqueio de gestores/administradores
 
 Bloqueia remoção do próprio usuário autenticado (403).
 Bloqueia remoção de usuário com incêndios vinculados (409).
-Bloqueia alteração da própria função (403).
+Bloqueia alteração da própria função (403). Bloqueio da própria conta (403).
 Tokens Sanctum revogados antes da remoção.
-senha_hash e cpf nunca expostos. UsuarioResource em modo completo.
-Log de auditoria em criação, atualização, remoção, mudança de função e brigada.
-Controle de papel via middleware — pendente implementação do middleware de papéis.
+senha_hash e cpf nunca expostos. UsuarioResource em modo completo (inclui `bloqueado`, `brigada_nome` quando cargada).
+Log de auditoria em criação, atualização, remoção, mudança de função, brigada e bloqueio/desbloqueio.
+Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
+
+### AdministracaoController (Inertia)
+
+- `GET /administracao` — web `auth`, `verified`, `nao-bloqueado`, `funcao:gestor|administrador` — lista usuários e logs (paginado) para a UI de administração.
 
 ### DeteccaoSateliteController
 
-- `GET  /api/deteccoes-satelite` — auth:sanctum (gestor, admin)
-- `POST /api/deteccoes-satelite` — auth:sanctum (admin)
-- `GET  /api/deteccoes-satelite/{deteccao}` — auth:sanctum (gestor, admin)
-- `POST /api/deteccoes-satelite/lote` — auth:sanctum (admin)
+- `GET  /api/deteccoes-satelite` — auth:sanctum (gestor, administrador)
+- `POST /api/deteccoes-satelite` — auth:sanctum (administrador)
+- `GET  /api/deteccoes-satelite/{deteccao}` — auth:sanctum (gestor, administrador)
+- `POST /api/deteccoes-satelite/lote` — auth:sanctum (administrador)
 
 Registros imutáveis — sem update e destroy por design.
 Ingestão individual e em lote (máx 500 por requisição).
@@ -494,29 +506,29 @@ storeLote atômico via DB::transaction().
 Filtros por fonte, confiança mínima e intervalo de data.
 Integração real NASA FIRMS pendente — será implementada como Job/Service.
 Log de auditoria em store e storeLote.
-Controle de papel via middleware — pendente implementação do middleware de papéis.
+Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 ### IncendioController
 
-- `GET   /api/incendios` — auth:sanctum (brigadista, gestor, admin)
-- `POST  /api/incendios` — auth:sanctum (brigadista, gestor, admin)
-- `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, admin)
-- `PUT   /api/incendios/{incendio}` — auth:sanctum (gestor, admin)
-- `PATCH /api/incendios/{incendio}/status` — auth:sanctum (brigadista, gestor, admin)
-- `PATCH /api/incendios/{incendio}/risco` — auth:sanctum (gestor, admin)
+- `GET   /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
+- `POST  /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
+- `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, administrador)
+- `PUT   /api/incendios/{incendio}` — auth:sanctum (gestor, administrador)
+- `PATCH /api/incendios/{incendio}/status` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/incendios/{incendio}/risco` — auth:sanctum (gestor, administrador)
 
 Sem destroy — registros históricos imutáveis.
 usuario_id sempre do usuário autenticado — nunca do payload.
 status não aceito em store nem update — endpoint dedicado.
 Eager load de area, localCritico, deteccaoSatelite, usuario.
 Log de auditoria em registro, atualização, mudança de status e risco.
-Controle de papel via middleware — pendente implementação do middleware de papéis.
+Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 ### LeituraMeteorologicaController
 
-- `GET  /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, admin)
-- `POST /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, admin)
-- `GET  /api/incendios/{incendio}/leituras/{leitura}` — auth:sanctum (brigadista, gestor, admin)
+- `GET  /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, administrador)
+- `POST /api/incendios/{incendio}/leituras` — auth:sanctum (brigadista, gestor, administrador)
+- `GET  /api/incendios/{incendio}/leituras/{leitura}` — auth:sanctum (brigadista, gestor, administrador)
 
 Rotas aninhadas — leituras existem apenas no contexto de um incêndio.
 Sem update e destroy — registros de contexto imutáveis.
@@ -524,15 +536,15 @@ incendio_id sempre da rota — nunca do payload.
 Threshold de alerta avaliado automaticamente: temperatura > 30°C ou umidade < 40%.
 Log de auditoria em store.
 Integração real OpenMeteo pendente — será implementada como Job/Service.
-Controle de papel via middleware — pendente.
+Papéis: middleware `funcao` + `nao-bloqueado`.
 
 ### DespachoBrigadaController
 
-- `GET   /api/incendios/{incendio}/despachos` — auth:sanctum (brigadista, gestor, admin)
-- `POST  /api/incendios/{incendio}/despachos` — auth:sanctum (gestor, admin)
-- `GET   /api/incendios/{incendio}/despachos/{despacho}` — auth:sanctum (brigadista, gestor, admin)
-- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada` — auth:sanctum (brigadista, gestor, admin)
-- `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/incendios/{incendio}/despachos` — auth:sanctum (brigadista, gestor, administrador)
+- `POST  /api/incendios/{incendio}/despachos` — auth:sanctum (gestor, administrador)
+- `GET   /api/incendios/{incendio}/despachos/{despacho}` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (brigadista, gestor, administrador)
 
 Rotas aninhadas — despachos existem apenas no contexto de um incêndio.
 Sem update genérico e sem destroy — registros operacionais históricos.
@@ -542,31 +554,31 @@ store bloqueia brigada já despachada sem finalização (409).
 store marca brigada indisponível. finalizar marca brigada disponível.
 tempo_resposta_minutos calculado no resource.
 Log de auditoria em store, registrarChegada e finalizar.
-Controle de papel via middleware — pendente.
+Papéis: middleware `funcao` + `nao-bloqueado`.
 
 ### AlertaController
 
-- `GET   /api/alertas` — auth:sanctum (brigadista, gestor, admin)
-- `GET   /api/alertas/{alerta}` — auth:sanctum (brigadista, gestor, admin)
-- `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (brigadista, gestor, admin)
+- `GET   /api/alertas` — auth:sanctum (brigadista, gestor, administrador)
+- `GET   /api/alertas/{alerta}` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (brigadista, gestor, administrador)
 
 Somente leitura + patch — criação via Observer/Job (pendente implementação).
 Tabela polimórfica sem FKs — origem_id e origem_tabela expostos diretamente.
 marcarEntregue bloqueia se já entregue (422).
 Log de auditoria em marcarEntregue.
-Controle de papel via middleware — pendente.
+Papéis: middleware `funcao` + `nao-bloqueado`.
 
 ### LogAuditoriaController
 
-- `GET /api/logs-auditoria` — auth:sanctum (admin)
-- `GET /api/logs-auditoria/{log}` — auth:sanctum (admin)
+- `GET /api/logs-auditoria` — auth:sanctum (administrador)
+- `GET /api/logs-auditoria/{log}` — auth:sanctum (administrador)
 
 Somente leitura — registros imutáveis por design.
 Paginação de 50 por página.
 Filtros por ação, entidade_tipo, entidade_id, usuario_id e intervalo de data.
 dados_json exposto como array — cast JSONB.
 UsuarioResource em modo completo.
-Controle de papel via middleware — pendente.
+Papéis: middleware `funcao` + `nao-bloqueado`.
 
 ---
 
