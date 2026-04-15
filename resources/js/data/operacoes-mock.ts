@@ -154,7 +154,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
         id: 'u1',
         nome: 'Carlos Silva',
         email: 'carlos@caninde.ms',
-        funcao: 'admin',
+        funcao: 'administrador',
         brigada_nome: null,
         bloqueado: false,
         criado_em: '2025-11-10T08:00:00Z',

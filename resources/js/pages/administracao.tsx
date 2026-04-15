@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Ban,
@@ -10,6 +10,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,24 +21,55 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    mockLogsAuditoria,
-    mockUsuariosAdmin,
-} from '@/data/operacoes-mock';
 import AppLayout from '@/layouts/app-layout';
+import axios from '@/lib/axios-setup';
 import { cn } from '@/lib/utils';
 import { administracao as administracaoRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import type { FuncaoUsuarioMock } from '@/types/operacoes';
+import type { FuncaoUsuario } from '@/types/auth';
 
-const funcaoLabel: Record<FuncaoUsuarioMock, string> = {
-    admin: 'Administrador',
-    gestor: 'Gestor',
-    brigadista: 'Brigadista',
+type UsuarioAdminLinha = {
+    id: string;
+    nome: string;
+    email: string;
+    funcao: FuncaoUsuario;
+    brigada_id: string | null;
+    brigada_nome?: string | null;
+    bloqueado: boolean;
+    criado_em: string;
 };
 
-const funcaoBadge: Record<FuncaoUsuarioMock, string> = {
-    admin: 'border-purple-200 bg-purple-100 text-purple-700',
+type LogLinha = {
+    id: string;
+    criado_em: string;
+    usuario_nome: string;
+    acao: string;
+    detalhes: string | null;
+};
+
+type Paginated<T> = {
+    data: T[];
+    links: unknown;
+    meta: { total?: number; per_page?: number; current_page?: number };
+};
+
+type PageProps = {
+    usuarios: Paginated<UsuarioAdminLinha>;
+    logsAuditoria: Paginated<LogLinha>;
+    podeGerenciarAdministradores: boolean;
+    funcaoAutenticado: FuncaoUsuario;
+};
+
+const funcaoLabel: Record<FuncaoUsuario, string> = {
+    user: 'Usuário',
+    brigadista: 'Brigadista',
+    gestor: 'Gestor',
+    administrador: 'Administrador',
+};
+
+const funcaoBadge: Record<FuncaoUsuario, string> = {
+    user: 'border-slate-200 bg-slate-100 text-slate-700',
+    administrador: 'border-purple-200 bg-purple-100 text-purple-700',
     gestor: 'border-blue-200 bg-blue-100 text-blue-700',
     brigadista: 'border-emerald-200 bg-emerald-100 text-emerald-700',
 };
@@ -46,38 +78,97 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Administração', href: administracaoRoute().url },
 ];
 
+function funcoesSelecionaveis(
+    podeGerenciarAdministradores: boolean,
+): FuncaoUsuario[] {
+    if (podeGerenciarAdministradores) {
+        return ['user', 'brigadista', 'gestor', 'administrador'];
+    }
+
+    return ['user', 'brigadista'];
+}
+
 export default function Administracao() {
-    const [usuarios, setUsuarios] = useState(mockUsuariosAdmin);
+    const {
+        usuarios,
+        logsAuditoria,
+        podeGerenciarAdministradores,
+        funcaoAutenticado,
+    } = usePage<PageProps>().props;
+
     const [busca, setBusca] = useState('');
     const [buscaLog, setBuscaLog] = useState('');
     const [aba, setAba] = useState<'usuarios' | 'logs'>('usuarios');
+    const [carregandoId, setCarregandoId] = useState<string | null>(null);
 
-    const usuariosFiltrados = usuarios.filter(
+    const opcoesFuncao = funcoesSelecionaveis(podeGerenciarAdministradores);
+
+    const usuariosFiltrados = usuarios.data.filter(
         (u) =>
             u.nome.toLowerCase().includes(busca.toLowerCase()) ||
             u.email.toLowerCase().includes(busca.toLowerCase()),
     );
 
-    const logsFiltrados = mockLogsAuditoria.filter(
+    const logsFiltrados = logsAuditoria.data.filter(
         (l) =>
-            l.descricao.toLowerCase().includes(buscaLog.toLowerCase()) ||
-            l.usuario_nome.toLowerCase().includes(buscaLog.toLowerCase()),
+            l.acao.toLowerCase().includes(buscaLog.toLowerCase()) ||
+            l.usuario_nome.toLowerCase().includes(buscaLog.toLowerCase()) ||
+            (l.detalhes?.toLowerCase().includes(buscaLog.toLowerCase()) ??
+                false),
     );
 
-    const alterarFuncao = (userId: string, novaFuncao: FuncaoUsuarioMock) => {
-        setUsuarios((prev) =>
-            prev.map((u) =>
-                u.id === userId ? { ...u, funcao: novaFuncao } : u,
-            ),
-        );
+    const alterarFuncao = async (userId: string, novaFuncao: FuncaoUsuario) => {
+        setCarregandoId(userId);
+        try {
+            await axios.patch(`/api/usuarios/${userId}/funcao`, {
+                funcao: novaFuncao,
+            });
+            toast.success('Função atualizada.');
+            router.reload({ only: ['usuarios', 'logsAuditoria'] });
+        } catch (err: unknown) {
+            const msg =
+                err &&
+                typeof err === 'object' &&
+                'response' in err &&
+                err.response &&
+                typeof err.response === 'object' &&
+                'data' in err.response &&
+                err.response.data &&
+                typeof err.response.data === 'object' &&
+                'message' in err.response.data &&
+                typeof err.response.data.message === 'string'
+                    ? err.response.data.message
+                    : 'Não foi possível alterar a função.';
+            toast.error(msg);
+        } finally {
+            setCarregandoId(null);
+        }
     };
 
-    const toggleBloqueio = (userId: string) => {
-        setUsuarios((prev) =>
-            prev.map((u) =>
-                u.id === userId ? { ...u, bloqueado: !u.bloqueado } : u,
-            ),
-        );
+    const alternarBloqueio = async (userId: string) => {
+        setCarregandoId(userId);
+        try {
+            await axios.patch(`/api/usuarios/${userId}/bloqueio`);
+            toast.success('Estado de bloqueio atualizado.');
+            router.reload({ only: ['usuarios', 'logsAuditoria'] });
+        } catch (err: unknown) {
+            const msg =
+                err &&
+                typeof err === 'object' &&
+                'response' in err &&
+                err.response &&
+                typeof err.response === 'object' &&
+                'data' in err.response &&
+                err.response.data &&
+                typeof err.response.data === 'object' &&
+                'message' in err.response.data &&
+                typeof err.response.data.message === 'string'
+                    ? err.response.data.message
+                    : 'Não foi possível alterar o bloqueio.';
+            toast.error(msg);
+        } finally {
+            setCarregandoId(null);
+        }
     };
 
     return (
@@ -94,7 +185,9 @@ export default function Administracao() {
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         Gerenciamento de usuários, funções e logs de auditoria
-                        (mock)
+                        {funcaoAutenticado === 'gestor'
+                            ? ' (como gestor, apenas funções usuário e brigadista)'
+                            : ''}
                     </p>
                 </motion.div>
 
@@ -140,7 +233,16 @@ export default function Administracao() {
                                 />
                             </div>
                             <span className="text-sm text-muted-foreground">
-                                {usuariosFiltrados.length} usuário(s)
+                                {usuariosFiltrados.length} usuário(s) (página{' '}
+                                {usuarios.meta.current_page ?? 1} de{' '}
+                                {Math.max(
+                                    1,
+                                    Math.ceil(
+                                        (usuarios.meta.total ?? 0) /
+                                            (usuarios.meta.per_page ?? 20),
+                                    ),
+                                )}
+                                )
                             </span>
                         </div>
 
@@ -195,26 +297,30 @@ export default function Administracao() {
 
                                         <Select
                                             value={user.funcao}
+                                            disabled={
+                                                carregandoId === user.id ||
+                                                (!podeGerenciarAdministradores &&
+                                                    (user.funcao ===
+                                                        'gestor' ||
+                                                        user.funcao ===
+                                                            'administrador'))
+                                            }
                                             onValueChange={(val) =>
                                                 alterarFuncao(
                                                     user.id,
-                                                    val as FuncaoUsuarioMock,
+                                                    val as FuncaoUsuario,
                                                 )
                                             }
                                         >
-                                            <SelectTrigger className="h-8 w-[140px] text-xs">
+                                            <SelectTrigger className="h-8 w-[160px] text-xs">
                                                 <SelectValue placeholder="Alterar função" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="brigadista">
-                                                    Brigadista
-                                                </SelectItem>
-                                                <SelectItem value="gestor">
-                                                    Gestor
-                                                </SelectItem>
-                                                <SelectItem value="admin">
-                                                    Administrador
-                                                </SelectItem>
+                                                {opcoesFuncao.map((f) => (
+                                                    <SelectItem key={f} value={f}>
+                                                        {funcaoLabel[f]}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
 
@@ -226,8 +332,16 @@ export default function Administracao() {
                                             }
                                             size="sm"
                                             className="h-8 text-xs"
+                                            disabled={
+                                                carregandoId === user.id ||
+                                                (!podeGerenciarAdministradores &&
+                                                    (user.funcao ===
+                                                        'gestor' ||
+                                                        user.funcao ===
+                                                            'administrador'))
+                                            }
                                             onClick={() =>
-                                                toggleBloqueio(user.id)
+                                                alternarBloqueio(user.id)
                                             }
                                         >
                                             {user.bloqueado ? (
@@ -281,7 +395,7 @@ export default function Administracao() {
                                                 Ação
                                             </th>
                                             <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                                                Descrição
+                                                Detalhes
                                             </th>
                                         </tr>
                                     </thead>
@@ -304,8 +418,8 @@ export default function Administracao() {
                                                         {log.acao}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-muted-foreground">
-                                                    {log.descricao}
+                                                <td className="max-w-md truncate px-4 py-3 text-muted-foreground">
+                                                    {log.detalhes ?? '—'}
                                                 </td>
                                             </tr>
                                         ))}
@@ -329,8 +443,8 @@ export default function Administracao() {
                                         <p className="text-sm font-medium">
                                             {log.usuario_nome}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {log.descricao}
+                                        <p className="text-xs break-all text-muted-foreground">
+                                            {log.detalhes ?? '—'}
                                         </p>
                                     </div>
                                 ))}

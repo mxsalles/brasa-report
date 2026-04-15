@@ -48,7 +48,11 @@ export interface DespachoBrigadaResumo {
     finalizado_em: string | null;
 }
 
-export type FuncaoUsuarioMock = 'admin' | 'gestor' | 'brigadista';
+export type FuncaoUsuarioMock =
+    | 'user'
+    | 'brigadista'
+    | 'gestor'
+    | 'administrador';
 
 export interface UsuarioAdminResumo {
     id: string;
