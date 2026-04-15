@@ -20,111 +20,86 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/senha/esqueci', [PasswordResetController::class, 'enviarToken']);
 Route::post('/auth/senha/redefinir', [PasswordResetController::class, 'redefinir']);
 
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
 
-    Route::get('/dashboard', [DashboardController::class, 'dados']);
+    Route::middleware('funcao:user|brigadista|gestor|administrador')->group(function (): void {
+        Route::get('/dashboard', [DashboardController::class, 'dados']);
+    });
 
-    // Papéis futuros: gestor, admin
-    Route::get('/brigadas', [BrigadaController::class, 'index']);
-    // Papéis futuros: admin
-    Route::post('/brigadas', [BrigadaController::class, 'store']);
-    // Papéis futuros: gestor, admin
-    Route::get('/brigadas/{brigada}', [BrigadaController::class, 'show']);
-    // Papéis futuros: admin
-    Route::put('/brigadas/{brigada}', [BrigadaController::class, 'update']);
-    // Papéis futuros: admin
-    Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::patch('/brigadas/{brigada}/localizacao', [BrigadaController::class, 'atualizarLocalizacao']);
+    Route::middleware('funcao:gestor|administrador')->group(function (): void {
+        Route::get('/brigadas', [BrigadaController::class, 'index']);
+        Route::get('/brigadas/{brigada}', [BrigadaController::class, 'show']);
 
-    // Papéis futuros: gestor, admin
-    Route::get('/areas-monitoradas', [AreaMonitoradaController::class, 'index']);
-    // Papéis futuros: admin
-    Route::post('/areas-monitoradas', [AreaMonitoradaController::class, 'store']);
-    // Papéis futuros: gestor, admin
-    Route::get('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'show']);
-    // Papéis futuros: admin
-    Route::put('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'update']);
-    // Papéis futuros: admin
-    Route::delete('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'destroy']);
+        Route::get('/areas-monitoradas', [AreaMonitoradaController::class, 'index']);
+        Route::get('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'show']);
 
-    // Papéis futuros: gestor, admin
-    Route::get('/locais-criticos', [LocalCriticoController::class, 'index']);
-    // Papéis futuros: admin
-    Route::post('/locais-criticos', [LocalCriticoController::class, 'store']);
-    // Papéis futuros: gestor, admin
-    Route::get('/locais-criticos/{local}', [LocalCriticoController::class, 'show']);
-    // Papéis futuros: admin
-    Route::put('/locais-criticos/{local}', [LocalCriticoController::class, 'update']);
-    // Papéis futuros: admin
-    Route::delete('/locais-criticos/{local}', [LocalCriticoController::class, 'destroy']);
+        Route::get('/locais-criticos', [LocalCriticoController::class, 'index']);
+        Route::get('/locais-criticos/{local}', [LocalCriticoController::class, 'show']);
 
-    // Papéis futuros: admin
-    Route::get('/usuarios', [UsuarioController::class, 'index']);
-    // Papéis futuros: admin
-    Route::post('/usuarios', [UsuarioController::class, 'store']);
-    // Papéis futuros: admin
-    Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
-    // Papéis futuros: admin
-    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
-    // Papéis futuros: admin
-    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
-    // Papéis futuros: admin
-    Route::patch('/usuarios/{usuario}/funcao', [UsuarioController::class, 'atualizarFuncao']);
-    // Papéis futuros: admin, gestor
-    Route::patch('/usuarios/{usuario}/brigada', [UsuarioController::class, 'atualizarBrigada']);
+        Route::get('/deteccoes-satelite', [DeteccaoSateliteController::class, 'index']);
+        Route::get('/deteccoes-satelite/{deteccao}', [DeteccaoSateliteController::class, 'show']);
+    });
 
-    // Papéis futuros: gestor, admin
-    Route::get('/deteccoes-satelite', [DeteccaoSateliteController::class, 'index']);
-    // Papéis futuros: admin
-    Route::post('/deteccoes-satelite', [DeteccaoSateliteController::class, 'store']);
-    // Papéis futuros: admin
-    Route::post('/deteccoes-satelite/lote', [DeteccaoSateliteController::class, 'storeLote']);
-    // Papéis futuros: gestor, admin
-    Route::get('/deteccoes-satelite/{deteccao}', [DeteccaoSateliteController::class, 'show']);
+    Route::middleware('funcao:administrador')->group(function (): void {
+        Route::post('/brigadas', [BrigadaController::class, 'store']);
+        Route::put('/brigadas/{brigada}', [BrigadaController::class, 'update']);
+        Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
 
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios', [IncendioController::class, 'index']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::post('/incendios', [IncendioController::class, 'store']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios/{incendio}', [IncendioController::class, 'show']);
-    // Papéis futuros: gestor, admin
-    Route::put('/incendios/{incendio}', [IncendioController::class, 'update']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
-    // Papéis futuros: gestor, admin
-    Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
+        Route::post('/areas-monitoradas', [AreaMonitoradaController::class, 'store']);
+        Route::put('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'update']);
+        Route::delete('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'destroy']);
 
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'index']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::post('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'store']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios/{incendio}/leituras/{leitura}', [LeituraMeteorologicaController::class, 'show']);
+        Route::post('/locais-criticos', [LocalCriticoController::class, 'store']);
+        Route::put('/locais-criticos/{local}', [LocalCriticoController::class, 'update']);
+        Route::delete('/locais-criticos/{local}', [LocalCriticoController::class, 'destroy']);
 
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'index']);
-    // Papéis futuros: gestor, admin
-    Route::post('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'store']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/incendios/{incendio}/despachos/{despacho}', [DespachoBrigadaController::class, 'show']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
+        Route::post('/deteccoes-satelite', [DeteccaoSateliteController::class, 'store']);
+        Route::post('/deteccoes-satelite/lote', [DeteccaoSateliteController::class, 'storeLote']);
 
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/alertas', [AlertaController::class, 'index']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
-    // Papéis futuros: brigadista, gestor, admin
-    Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
+        Route::get('/usuarios', [UsuarioController::class, 'index']);
+        Route::post('/usuarios', [UsuarioController::class, 'store']);
+        Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
+        Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
+        Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
 
-    // Papéis futuros: admin
-    Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index']);
-    // Papéis futuros: admin
-    Route::get('/logs-auditoria/{log}', [LogAuditoriaController::class, 'show']);
+        Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index']);
+        Route::get('/logs-auditoria/{log}', [LogAuditoriaController::class, 'show']);
+    });
+
+    Route::middleware('funcao:gestor|administrador')->group(function (): void {
+        Route::patch('/usuarios/{usuario}/funcao', [UsuarioController::class, 'atualizarFuncao']);
+        Route::patch('/usuarios/{usuario}/brigada', [UsuarioController::class, 'atualizarBrigada']);
+        Route::patch('/usuarios/{usuario}/bloqueio', [UsuarioController::class, 'alternarBloqueio']);
+    });
+
+    Route::middleware('funcao:brigadista|gestor|administrador')->group(function (): void {
+        Route::patch('/brigadas/{brigada}/localizacao', [BrigadaController::class, 'atualizarLocalizacao']);
+
+        Route::get('/incendios', [IncendioController::class, 'index']);
+        Route::post('/incendios', [IncendioController::class, 'store']);
+        Route::get('/incendios/{incendio}', [IncendioController::class, 'show']);
+        Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
+
+        Route::get('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'index']);
+        Route::post('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'store']);
+        Route::get('/incendios/{incendio}/leituras/{leitura}', [LeituraMeteorologicaController::class, 'show']);
+
+        Route::get('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'index']);
+        Route::get('/incendios/{incendio}/despachos/{despacho}', [DespachoBrigadaController::class, 'show']);
+        Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
+        Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
+
+        Route::get('/alertas', [AlertaController::class, 'index']);
+        Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
+        Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
+    });
+
+    Route::middleware('funcao:gestor|administrador')->group(function (): void {
+        Route::put('/incendios/{incendio}', [IncendioController::class, 'update']);
+        Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
+
+        Route::post('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'store']);
+    });
 });
