@@ -1,4 +1,4 @@
-const LOGO_SRC = '/images/logo-caninde.png';
+const LOGO_SRC = '/images/logo-brasa.png';
 
 export default function AppLogo() {
     return (
