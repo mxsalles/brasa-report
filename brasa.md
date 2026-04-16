@@ -45,8 +45,8 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 ### Rotas alinhadas ao protótipo Canindé
 
-**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`).
-**Páginas ainda com mock:** mapa, alertas, brigadas. **Administração** usa dados reais (Inertia + API para alterações).
+**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API).
+**Páginas ainda com mock:** mapa, alertas. **Administração** usa dados reais (Inertia + API para alterações).
 
 As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Dados auxiliares em `resources/js/data/operacoes-mock.ts` e mapa com **Leaflet** onde ainda mock.
 
@@ -348,6 +348,8 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | AreaMonitoradaSeeder               | `database/seeders/AreaMonitoradaSeeder.php`                                     | —                                                     |
 | Testes do seeder usuário teste     | `tests/Feature/UsuarioTesteSeederTest.php`                                    | —                                                     |
 | Testes de dashboard                | `tests/Feature/DashboardControllerTest.php`                                    | —                                                     |
+| BrigadasPageController (Inertia)  | `app/Http/Controllers/BrigadasPageController.php`                              | Página Inertia com dados reais + CRUD via API          |
+| Testes da página brigadas         | `tests/Feature/BrigadasPageControllerTest.php`                                 | —                                                     |
 | Arquivos de idioma pt_BR          | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php`     | Validação, auth, senhas, paginação traduzidos          |
 | Teste de locale                   | `tests/Unit/AppLocaleTest.php`                                                 | Garante locale/fallback/faker = pt_BR                  |
 | Teste de política de senha        | `tests/Unit/PasswordPolicyTest.php`                                            | Produção: mínimo 8 caracteres sem regras de complexidade |
@@ -430,11 +432,11 @@ para não revelar existência de conta. Todos os tokens Sanctum revogados após 
 
 ### BrigadaController
 
-- `GET    /api/brigadas` — auth:sanctum (gestor, administrador)
-- `POST   /api/brigadas` — auth:sanctum (administrador)
-- `GET    /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
-- `PUT    /api/brigadas/{brigada}` — auth:sanctum (administrador)
-- `DELETE /api/brigadas/{brigada}` — auth:sanctum (administrador)
+- `GET    /api/brigadas` — auth:sanctum (user, brigadista, gestor, administrador)
+- `POST   /api/brigadas` — auth:sanctum (gestor, administrador)
+- `GET    /api/brigadas/{brigada}` — auth:sanctum (user, brigadista, gestor, administrador)
+- `PUT    /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
+- `DELETE /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
 - `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, administrador)
 
 Bloqueia remoção de brigada com membros vinculados (409).
@@ -488,6 +490,14 @@ Tokens Sanctum revogados antes da remoção.
 senha_hash e cpf nunca expostos. UsuarioResource em modo completo (inclui `bloqueado`, `brigada_nome` quando cargada).
 Log de auditoria em criação, atualização, remoção, mudança de função, brigada e bloqueio/desbloqueio.
 Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
+
+### BrigadasPageController (Inertia)
+
+- `GET /brigadas` — web `auth`, `verified`, `nao-bloqueado` — exibe brigadas com dados reais (contagem de membros), despachos recentes e CRUD condicional (gestor/administrador).
+
+Props Inertia: `brigadas`, `despachosRecentes`, `podeGerenciar` (boolean), `funcaoAutenticado`, `usuariosDisponiveis` (usuários sem brigada, não bloqueados — só quando `podeGerenciar`).
+Frontend consome API (`POST /api/brigadas`, `PUT`, `DELETE`) para operações de escrita, `GET /api/brigadas/{brigada}` para detalhes com membros (sob demanda via Dialog), e `PATCH /api/usuarios/{usuario}/brigada` para vincular/desvincular membros ao salvar.
+Formulário de criar/editar: nome, tipo, disponível, seleção de membros (com busca). Coordenadas não são definidas na criação — são atualizadas via despacho.
 
 ### AdministracaoController (Inertia)
 
