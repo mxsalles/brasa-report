@@ -495,9 +495,10 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 - `GET /brigadas` — web `auth`, `verified`, `nao-bloqueado` — exibe brigadas com dados reais (contagem de membros), despachos recentes e CRUD condicional (gestor/administrador).
 
-Props Inertia: `brigadas`, `despachosRecentes`, `podeGerenciar` (boolean), `funcaoAutenticado`, `usuariosDisponiveis` (usuários sem brigada, não bloqueados — só quando `podeGerenciar`).
+Props Inertia: `brigadas`, `despachosRecentes`, `podeGerenciar` (boolean), `funcaoAutenticado`, `usuariosDisponiveis` (usuários sem brigada, não bloqueados — só quando `podeGerenciar`), `incendiosAtivos` (incêndios com status ativo/contido, com área eager loaded — só quando `podeGerenciar`).
 Frontend consome API (`POST /api/brigadas`, `PUT`, `DELETE`) para operações de escrita, `GET /api/brigadas/{brigada}` para detalhes com membros (sob demanda via Dialog), e `PATCH /api/usuarios/{usuario}/brigada` para vincular/desvincular membros ao salvar.
 Formulário de criar/editar: nome, tipo, disponível, seleção de membros (com busca). Coordenadas não são definidas na criação — são atualizadas via despacho.
+Dialog de despacho em 2 etapas: (1) selecionar incêndio ativo/contido, (2) selecionar múltiplas brigadas disponíveis. Ao confirmar, para cada brigada selecionada executa `POST /api/incendios/{id}/despachos` + `PATCH /api/brigadas/{id}/localizacao` com coordenadas do incêndio. Brigadas indisponíveis aparecem desabilitadas visualmente.
 
 ### AdministracaoController (Inertia)
 
