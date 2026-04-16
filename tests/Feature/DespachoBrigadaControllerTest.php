@@ -372,3 +372,49 @@ test('test_registra_log_de_auditoria_na_finalizacao', function () {
     expect($log)->not->toBeNull()
         ->and($log->usuario_id)->toBe($usuario->id);
 });
+
+test('test_despacho_e_localizacao_atualiza_brigada_com_coordenadas_do_incendio', function () {
+    $incendio = Incendio::factory()->create([
+        'latitude' => -15.1234567,
+        'longitude' => -56.7654321,
+    ]);
+    $brigadaA = Brigada::factory()->create(['disponivel' => true, 'latitude_atual' => null, 'longitude_atual' => null]);
+    $brigadaB = Brigada::factory()->create(['disponivel' => true, 'latitude_atual' => null, 'longitude_atual' => null]);
+    $headers = despachoBrigadaAuthHeaders();
+
+    $this->postJson(
+        '/api/incendios/'.$incendio->id.'/despachos',
+        ['brigada_id' => $brigadaA->id],
+        $headers
+    )->assertCreated();
+
+    $this->patchJson(
+        '/api/brigadas/'.$brigadaA->id.'/localizacao',
+        ['latitude_atual' => $incendio->latitude, 'longitude_atual' => $incendio->longitude],
+        $headers
+    )->assertOk();
+
+    $this->postJson(
+        '/api/incendios/'.$incendio->id.'/despachos',
+        ['brigada_id' => $brigadaB->id],
+        $headers
+    )->assertCreated();
+
+    $this->patchJson(
+        '/api/brigadas/'.$brigadaB->id.'/localizacao',
+        ['latitude_atual' => $incendio->latitude, 'longitude_atual' => $incendio->longitude],
+        $headers
+    )->assertOk();
+
+    $brigadaA->refresh();
+    $brigadaB->refresh();
+
+    expect($brigadaA->disponivel)->toBeFalse()
+        ->and((float) $brigadaA->latitude_atual)->toBe(-15.1234567)
+        ->and((float) $brigadaA->longitude_atual)->toBe(-56.7654321)
+        ->and($brigadaB->disponivel)->toBeFalse()
+        ->and((float) $brigadaB->latitude_atual)->toBe(-15.1234567)
+        ->and((float) $brigadaB->longitude_atual)->toBe(-56.7654321);
+
+    expect(DespachoBrigada::query()->where('incendio_id', $incendio->id)->count())->toBe(2);
+});

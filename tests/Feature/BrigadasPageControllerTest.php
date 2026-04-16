@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\FuncaoUsuario;
+use App\Enums\StatusIncendio;
 use App\Models\Brigada;
 use App\Models\DespachoBrigada;
+use App\Models\Incendio;
 use App\Models\Usuario;
 
 test('usuario autenticado acessa pagina de brigadas', function () {
@@ -176,4 +178,77 @@ test('user nao recebe usuarios disponiveis', function () {
     $props = $response->original->getData()['page']['props'];
 
     expect($props['usuariosDisponiveis'])->toBeEmpty();
+});
+
+test('gestor recebe incendios ativos e contidos nas props', function () {
+    $gestor = Usuario::factory()->verified()->gestor()->create();
+    Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    Incendio::factory()->create(['status' => StatusIncendio::Contido]);
+    Incendio::factory()->create(['status' => StatusIncendio::Resolvido]);
+
+    $response = $this->actingAs($gestor)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    expect($props['incendiosAtivos'])->toHaveCount(2);
+
+    $statuses = collect($props['incendiosAtivos'])->pluck('status')->all();
+    expect($statuses)->each->toBeIn(['ativo', 'contido']);
+});
+
+test('administrador recebe incendios ativos nas props', function () {
+    $admin = Usuario::factory()->verified()->administrador()->create();
+    Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $response = $this->actingAs($admin)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    expect($props['incendiosAtivos'])->toHaveCount(1)
+        ->and($props['incendiosAtivos'][0]['status'])->toBe('ativo');
+});
+
+test('user nao recebe incendios ativos', function () {
+    $user = Usuario::factory()->verified()->create(['funcao' => FuncaoUsuario::User]);
+    Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $response = $this->actingAs($user)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    expect($props['incendiosAtivos'])->toBeEmpty();
+});
+
+test('brigadista nao recebe incendios ativos', function () {
+    $brigadista = Usuario::factory()->verified()->brigadista()->create();
+    Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $response = $this->actingAs($brigadista)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    expect($props['incendiosAtivos'])->toBeEmpty();
+});
+
+test('incendios ativos incluem area_nome e coordenadas', function () {
+    $gestor = Usuario::factory()->verified()->gestor()->create();
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $response = $this->actingAs($gestor)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    $item = $props['incendiosAtivos'][0];
+
+    expect($item)->toHaveKeys(['id', 'latitude', 'longitude', 'detectado_em', 'nivel_risco', 'status', 'area_nome'])
+        ->and($item['id'])->toBe($incendio->id)
+        ->and($item['latitude'])->not->toBeNull()
+        ->and($item['longitude'])->not->toBeNull()
+        ->and($item['area_nome'])->not->toBeNull();
+});
+
+test('incendios resolvidos nao aparecem em incendiosAtivos', function () {
+    $gestor = Usuario::factory()->verified()->gestor()->create();
+    $resolvido = Incendio::factory()->create(['status' => StatusIncendio::Resolvido]);
+
+    $response = $this->actingAs($gestor)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    $ids = collect($props['incendiosAtivos'])->pluck('id')->all();
+    expect($ids)->not->toContain($resolvido->id);
 });
