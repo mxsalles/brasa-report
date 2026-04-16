@@ -499,6 +499,7 @@ Props Inertia: `brigadas`, `despachosRecentes`, `podeGerenciar` (boolean), `func
 Frontend consome API (`POST /api/brigadas`, `PUT`, `DELETE`) para operações de escrita, `GET /api/brigadas/{brigada}` para detalhes com membros (sob demanda via Dialog), e `PATCH /api/usuarios/{usuario}/brigada` para vincular/desvincular membros ao salvar.
 Formulário de criar/editar: nome, tipo, disponível, seleção de membros (com busca). Coordenadas não são definidas na criação — são atualizadas via despacho.
 Dialog de despacho em 2 etapas: (1) selecionar incêndio ativo/contido, (2) selecionar múltiplas brigadas disponíveis. Ao confirmar, para cada brigada selecionada executa `POST /api/incendios/{id}/despachos` + `PATCH /api/brigadas/{id}/localizacao` com coordenadas do incêndio. Brigadas indisponíveis aparecem desabilitadas visualmente.
+Dialog de gerenciamento de status: ao clicar num despacho recente (gestor/administrador), abre dialog com detalhes e botão para avançar status (registrar chegada → finalizar com observações opcionais). `despachosRecentes` inclui `incendio_id` e `observacoes`.
 
 ### AdministracaoController (Inertia)
 
@@ -554,8 +555,8 @@ Papéis: middleware `funcao` + `nao-bloqueado`.
 - `GET   /api/incendios/{incendio}/despachos` — auth:sanctum (brigadista, gestor, administrador)
 - `POST  /api/incendios/{incendio}/despachos` — auth:sanctum (gestor, administrador)
 - `GET   /api/incendios/{incendio}/despachos/{despacho}` — auth:sanctum (brigadista, gestor, administrador)
-- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada` — auth:sanctum (brigadista, gestor, administrador)
-- `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/chegada` — auth:sanctum (gestor, administrador)
+- `PATCH /api/incendios/{incendio}/despachos/{despacho}/finalizar` — auth:sanctum (gestor, administrador)
 
 Rotas aninhadas — despachos existem apenas no contexto de um incêndio.
 Sem update genérico e sem destroy — registros operacionais históricos.
