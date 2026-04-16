@@ -88,8 +88,6 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
 
         Route::get('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'index']);
         Route::get('/incendios/{incendio}/despachos/{despacho}', [DespachoBrigadaController::class, 'show']);
-        Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
-        Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
 
         Route::get('/alertas', [AlertaController::class, 'index']);
         Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
@@ -101,5 +99,7 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
         Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
 
         Route::post('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'store']);
+        Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);
+        Route::patch('/incendios/{incendio}/despachos/{despacho}/finalizar', [DespachoBrigadaController::class, 'finalizar']);
     });
 });
