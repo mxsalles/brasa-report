@@ -252,3 +252,20 @@ test('incendios resolvidos nao aparecem em incendiosAtivos', function () {
     $ids = collect($props['incendiosAtivos'])->pluck('id')->all();
     expect($ids)->not->toContain($resolvido->id);
 });
+
+test('despachos recentes incluem incendio_id e observacoes', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $despacho = DespachoBrigada::factory()->create([
+        'observacoes' => 'Prioridade máxima',
+    ]);
+
+    $response = $this->actingAs($usuario)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+
+    $item = collect($props['despachosRecentes'])->firstWhere('id', $despacho->id);
+
+    expect($item)->not->toBeNull()
+        ->and($item)->toHaveKeys(['incendio_id', 'observacoes'])
+        ->and($item['incendio_id'])->toBe($despacho->incendio_id)
+        ->and($item['observacoes'])->toBe('Prioridade máxima');
+});

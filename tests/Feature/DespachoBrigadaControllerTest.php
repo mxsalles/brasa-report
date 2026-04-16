@@ -249,7 +249,7 @@ test('test_retorna_422_se_chegada_ja_registrada', function () {
 });
 
 test('test_registra_log_de_auditoria_na_chegada', function () {
-    $usuario = Usuario::factory()->brigadista()->create();
+    $usuario = Usuario::factory()->gestor()->create();
     $incendio = Incendio::factory()->create();
     $despacho = DespachoBrigada::factory()->create([
         'incendio_id' => $incendio->id,
@@ -348,7 +348,7 @@ test('test_retorna_422_se_despacho_ja_finalizado', function () {
 });
 
 test('test_registra_log_de_auditoria_na_finalizacao', function () {
-    $usuario = Usuario::factory()->brigadista()->create();
+    $usuario = Usuario::factory()->gestor()->create();
     $incendio = Incendio::factory()->create();
     $despacho = DespachoBrigada::factory()->create([
         'incendio_id' => $incendio->id,
@@ -417,4 +417,70 @@ test('test_despacho_e_localizacao_atualiza_brigada_com_coordenadas_do_incendio',
         ->and((float) $brigadaB->longitude_atual)->toBe(-56.7654321);
 
     expect(DespachoBrigada::query()->where('incendio_id', $incendio->id)->count())->toBe(2);
+});
+
+test('test_brigadista_nao_pode_registrar_chegada', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $incendio = Incendio::factory()->create();
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/chegada',
+        ['chegada_em' => '2024-06-01T09:30:00Z'],
+        despachoBrigadaAuthHeaders($brigadista)
+    )->assertForbidden();
+});
+
+test('test_brigadista_nao_pode_finalizar_despacho', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $incendio = Incendio::factory()->create();
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => Carbon::parse('2024-06-01 09:00:00'),
+        'finalizado_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/finalizar',
+        ['finalizado_em' => '2024-06-01T18:00:00Z'],
+        despachoBrigadaAuthHeaders($brigadista)
+    )->assertForbidden();
+});
+
+test('test_gestor_pode_registrar_chegada', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/chegada',
+        ['chegada_em' => '2024-06-01T09:30:00Z'],
+        despachoBrigadaAuthHeaders($gestor)
+    )->assertOk();
+});
+
+test('test_gestor_pode_finalizar_despacho', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => Carbon::parse('2024-06-01 09:00:00'),
+        'finalizado_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/finalizar',
+        ['finalizado_em' => '2024-06-01T18:00:00Z'],
+        despachoBrigadaAuthHeaders($gestor)
+    )->assertOk();
 });
