@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\FuncaoUsuario;
 use App\Models\Brigada;
 use App\Models\LogAuditoria;
 use App\Models\Usuario;
@@ -190,4 +191,78 @@ test('test_retorna_422_com_coordenadas_invalidas', function () {
     ], brigadaAuthHeaders())
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['latitude_atual']);
+});
+
+test('user pode listar brigadas', function () {
+    $usuario = Usuario::factory()->create(['funcao' => FuncaoUsuario::User]);
+    Brigada::factory()->create();
+
+    $this->getJson('/api/brigadas', brigadaAuthHeaders($usuario))
+        ->assertOk();
+});
+
+test('brigadista pode listar brigadas', function () {
+    $usuario = Usuario::factory()->brigadista()->create();
+    Brigada::factory()->create();
+
+    $this->getJson('/api/brigadas', brigadaAuthHeaders($usuario))
+        ->assertOk();
+});
+
+test('user pode ver detalhes de brigada', function () {
+    $usuario = Usuario::factory()->create(['funcao' => FuncaoUsuario::User]);
+    $brigada = Brigada::factory()->create();
+
+    $this->getJson('/api/brigadas/'.$brigada->id, brigadaAuthHeaders($usuario))
+        ->assertOk();
+});
+
+test('gestor pode criar brigada', function () {
+    $usuario = Usuario::factory()->gestor()->create();
+
+    $this->postJson('/api/brigadas', [
+        'nome' => 'Brigada Gestor',
+        'tipo' => 'florestal',
+    ], brigadaAuthHeaders($usuario))->assertCreated();
+
+    $this->assertDatabaseHas('brigadas', ['nome' => 'Brigada Gestor']);
+});
+
+test('gestor pode atualizar brigada', function () {
+    $usuario = Usuario::factory()->gestor()->create();
+    $brigada = Brigada::factory()->create(['nome' => 'Antes']);
+
+    $this->putJson('/api/brigadas/'.$brigada->id, [
+        'nome' => 'Depois',
+    ], brigadaAuthHeaders($usuario))->assertOk();
+
+    expect($brigada->fresh()->nome)->toBe('Depois');
+});
+
+test('gestor pode remover brigada sem membros', function () {
+    $usuario = Usuario::factory()->gestor()->create();
+    $brigada = Brigada::factory()->create();
+
+    $this->deleteJson('/api/brigadas/'.$brigada->id, [], brigadaAuthHeaders($usuario))
+        ->assertNoContent();
+
+    $this->assertDatabaseMissing('brigadas', ['id' => $brigada->id]);
+});
+
+test('user nao pode criar brigada', function () {
+    $usuario = Usuario::factory()->create(['funcao' => FuncaoUsuario::User]);
+
+    $this->postJson('/api/brigadas', [
+        'nome' => 'Tentativa',
+        'tipo' => 'florestal',
+    ], brigadaAuthHeaders($usuario))->assertForbidden();
+});
+
+test('brigadista nao pode criar brigada', function () {
+    $usuario = Usuario::factory()->brigadista()->create();
+
+    $this->postJson('/api/brigadas', [
+        'nome' => 'Tentativa',
+        'tipo' => 'florestal',
+    ], brigadaAuthHeaders($usuario))->assertForbidden();
 });
