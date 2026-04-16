@@ -1,11 +1,16 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
+    ArrowLeft,
+    ArrowRight,
+    CheckCircle,
     Clock,
+    Flame,
     MapPin,
     Pencil,
     Plus,
     Search,
+    Send,
     Trash2,
     UserCheck,
     UserX,
@@ -74,12 +79,23 @@ type BrigadaDetalhe = {
     membros: MembroRestrito[];
 };
 
+type IncendioAtivo = {
+    id: string;
+    latitude: string;
+    longitude: string;
+    detectado_em: string | null;
+    nivel_risco: string;
+    status: string;
+    area_nome: string;
+};
+
 type PageProps = {
     brigadas: BrigadaItem[];
     despachosRecentes: DespachoRecente[];
     podeGerenciar: boolean;
     funcaoAutenticado: FuncaoUsuario;
     usuariosDisponiveis: UsuarioDisponivel[];
+    incendiosAtivos: IncendioAtivo[];
 };
 
 type FormData = {
@@ -106,6 +122,32 @@ const funcaoBadge: Record<string, string> = {
     brigadista: 'border-emerald-200 bg-emerald-100 text-emerald-700',
     gestor: 'border-blue-200 bg-blue-100 text-blue-700',
     administrador: 'border-purple-200 bg-purple-100 text-purple-700',
+};
+
+const nivelRiscoLabel: Record<string, string> = {
+    baixo: 'Baixo',
+    moderado: 'Moderado',
+    alto: 'Alto',
+    critico: 'Crítico',
+};
+
+const nivelRiscoBadge: Record<string, string> = {
+    baixo: 'border-emerald-200 bg-emerald-100 text-emerald-700',
+    moderado: 'border-amber-200 bg-amber-100 text-amber-700',
+    alto: 'border-orange-200 bg-orange-100 text-orange-700',
+    critico: 'border-red-200 bg-red-100 text-red-700',
+};
+
+const statusIncendioLabel: Record<string, string> = {
+    ativo: 'Ativo',
+    contido: 'Contido',
+    resolvido: 'Resolvido',
+};
+
+const statusIncendioBadge: Record<string, string> = {
+    ativo: 'border-red-200 bg-red-100 text-red-700',
+    contido: 'border-amber-200 bg-amber-100 text-amber-700',
+    resolvido: 'border-emerald-200 bg-emerald-100 text-emerald-700',
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -136,6 +178,7 @@ export default function Brigadas() {
         despachosRecentes,
         podeGerenciar,
         usuariosDisponiveis,
+        incendiosAtivos,
     } = usePage<PageProps>().props;
 
     const [detailOpen, setDetailOpen] = useState(false);
@@ -163,6 +206,17 @@ export default function Brigadas() {
         null,
     );
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    const [dispatchOpen, setDispatchOpen] = useState(false);
+    const [dispatchStep, setDispatchStep] = useState<1 | 2>(1);
+    const [selectedIncendioId, setSelectedIncendioId] = useState<string | null>(
+        null,
+    );
+    const [selectedBrigadaIds, setSelectedBrigadaIds] = useState<Set<string>>(
+        new Set(),
+    );
+    const [dispatchSearch, setDispatchSearch] = useState('');
+    const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
 
     const candidateMembros = useMemo(() => {
         const all: UsuarioDisponivel[] = [
@@ -364,6 +418,85 @@ export default function Brigadas() {
         }
     }, [deletingBrigada]);
 
+    const openDispatch = useCallback(() => {
+        setDispatchStep(1);
+        setSelectedIncendioId(null);
+        setSelectedBrigadaIds(new Set());
+        setDispatchSearch('');
+        setDispatchOpen(true);
+    }, []);
+
+    const selectedIncendio = useMemo(
+        () =>
+            incendiosAtivos?.find((i) => i.id === selectedIncendioId) ?? null,
+        [incendiosAtivos, selectedIncendioId],
+    );
+
+    const filteredIncendios = useMemo(() => {
+        if (!incendiosAtivos) return [];
+        if (!dispatchSearch.trim()) return incendiosAtivos;
+        const q = dispatchSearch.toLowerCase();
+        return incendiosAtivos.filter(
+            (i) =>
+                i.area_nome.toLowerCase().includes(q) ||
+                i.status.toLowerCase().includes(q) ||
+                i.nivel_risco.toLowerCase().includes(q),
+        );
+    }, [incendiosAtivos, dispatchSearch]);
+
+    const filteredDispatchBrigadas = useMemo(() => {
+        if (!dispatchSearch.trim()) return brigadas;
+        const q = dispatchSearch.toLowerCase();
+        return brigadas.filter((b) => b.nome.toLowerCase().includes(q));
+    }, [brigadas, dispatchSearch]);
+
+    const toggleDispatchBrigada = useCallback((id: string) => {
+        setSelectedBrigadaIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }, []);
+
+    const confirmDispatch = useCallback(async () => {
+        if (!selectedIncendio || selectedBrigadaIds.size === 0) return;
+        setDispatchSubmitting(true);
+        try {
+            const promises = [...selectedBrigadaIds].flatMap((brigadaId) => [
+                axios.post(
+                    `/api/incendios/${selectedIncendio.id}/despachos`,
+                    { brigada_id: brigadaId },
+                ),
+                axios.patch(`/api/brigadas/${brigadaId}/localizacao`, {
+                    latitude_atual: selectedIncendio.latitude,
+                    longitude_atual: selectedIncendio.longitude,
+                }),
+            ]);
+
+            await Promise.all(promises);
+
+            const count = selectedBrigadaIds.size;
+            toast.success(
+                `${count} brigada${count !== 1 ? 's' : ''} despachada${count !== 1 ? 's' : ''} com sucesso.`,
+            );
+            setDispatchOpen(false);
+            router.reload();
+        } catch (err: unknown) {
+            toast.error(
+                extractErrorMessage(
+                    err,
+                    'Não foi possível completar o despacho.',
+                ),
+            );
+        } finally {
+            setDispatchSubmitting(false);
+        }
+    }, [selectedIncendio, selectedBrigadaIds]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Brigadas" />
@@ -380,10 +513,19 @@ export default function Brigadas() {
                         </p>
                     </div>
                     {podeGerenciar && (
-                        <Button onClick={openCreate}>
-                            <Plus className="size-4" />
-                            Nova Brigada
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={openDispatch}
+                            >
+                                <Send className="size-4" />
+                                Despachar
+                            </Button>
+                            <Button onClick={openCreate}>
+                                <Plus className="size-4" />
+                                Nova Brigada
+                            </Button>
+                        </div>
                     )}
                 </motion.div>
 
@@ -838,6 +980,326 @@ export default function Brigadas() {
                         >
                             {deleteLoading ? 'Removendo...' : 'Remover'}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog de despacho */}
+            <Dialog
+                open={dispatchOpen}
+                onOpenChange={(open) => {
+                    if (!dispatchSubmitting) setDispatchOpen(open);
+                }}
+            >
+                <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Send className="size-5 text-primary" />
+                            Despachar Brigadas
+                        </DialogTitle>
+                        <DialogDescription>
+                            {dispatchStep === 1
+                                ? 'Selecione o incêndio a ser combatido.'
+                                : 'Selecione as brigadas para o despacho.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        <span
+                            className={cn(
+                                'flex size-5 items-center justify-center rounded-full text-[10px] font-bold',
+                                dispatchStep === 1
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground',
+                            )}
+                        >
+                            1
+                        </span>
+                        <span
+                            className={cn(
+                                dispatchStep === 1 && 'font-medium text-foreground',
+                            )}
+                        >
+                            Incêndio
+                        </span>
+                        <ArrowRight className="size-3" />
+                        <span
+                            className={cn(
+                                'flex size-5 items-center justify-center rounded-full text-[10px] font-bold',
+                                dispatchStep === 2
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground',
+                            )}
+                        >
+                            2
+                        </span>
+                        <span
+                            className={cn(
+                                dispatchStep === 2 && 'font-medium text-foreground',
+                            )}
+                        >
+                            Brigadas
+                        </span>
+                    </div>
+
+                    {dispatchStep === 1 && (
+                        <div className="space-y-3">
+                            <div className="relative">
+                                <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={dispatchSearch}
+                                    onChange={(e) =>
+                                        setDispatchSearch(e.target.value)
+                                    }
+                                    placeholder="Buscar por área, status..."
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            <div className="max-h-64 space-y-2 overflow-y-auto">
+                                {filteredIncendios.length === 0 ? (
+                                    <p className="py-6 text-center text-sm text-muted-foreground">
+                                        {dispatchSearch
+                                            ? 'Nenhum incêndio encontrado.'
+                                            : 'Nenhum incêndio ativo ou contido.'}
+                                    </p>
+                                ) : (
+                                    filteredIncendios.map((inc) => (
+                                        <label
+                                            key={inc.id}
+                                            className={cn(
+                                                'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors',
+                                                selectedIncendioId === inc.id
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'hover:bg-secondary/60',
+                                            )}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="dispatch-incendio"
+                                                className="mt-1 accent-primary"
+                                                checked={
+                                                    selectedIncendioId ===
+                                                    inc.id
+                                                }
+                                                onChange={() =>
+                                                    setSelectedIncendioId(
+                                                        inc.id,
+                                                    )
+                                                }
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Flame className="size-3.5 shrink-0 text-orange-500" />
+                                                    <span className="truncate text-sm font-medium">
+                                                        {inc.area_nome}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full border px-2 py-0.5 text-[10px] font-medium',
+                                                            statusIncendioBadge[
+                                                                inc.status
+                                                            ] ??
+                                                                'border-border text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        {statusIncendioLabel[
+                                                            inc.status
+                                                        ] ?? inc.status}
+                                                    </span>
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full border px-2 py-0.5 text-[10px] font-medium',
+                                                            nivelRiscoBadge[
+                                                                inc.nivel_risco
+                                                            ] ??
+                                                                'border-border text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        {nivelRiscoLabel[
+                                                            inc.nivel_risco
+                                                        ] ?? inc.nivel_risco}
+                                                    </span>
+                                                    {inc.detectado_em && (
+                                                        <span className="text-[10px] text-muted-foreground">
+                                                            {new Date(
+                                                                inc.detectado_em,
+                                                            ).toLocaleString(
+                                                                'pt-BR',
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {dispatchStep === 2 && (
+                        <div className="space-y-3">
+                            {selectedIncendio && (
+                                <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+                                    <Flame className="size-3.5 shrink-0 text-orange-500" />
+                                    <span className="font-medium">
+                                        {selectedIncendio.area_nome}
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'rounded-full border px-2 py-0.5 text-[10px] font-medium',
+                                            statusIncendioBadge[
+                                                selectedIncendio.status
+                                            ] ??
+                                                'border-border text-muted-foreground',
+                                        )}
+                                    >
+                                        {statusIncendioLabel[
+                                            selectedIncendio.status
+                                        ] ?? selectedIncendio.status}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="relative">
+                                <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={dispatchSearch}
+                                    onChange={(e) =>
+                                        setDispatchSearch(e.target.value)
+                                    }
+                                    placeholder="Buscar brigada por nome..."
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
+                                {filteredDispatchBrigadas.length === 0 ? (
+                                    <p className="py-4 text-center text-xs text-muted-foreground">
+                                        {dispatchSearch
+                                            ? 'Nenhuma brigada encontrada.'
+                                            : 'Nenhuma brigada cadastrada.'}
+                                    </p>
+                                ) : (
+                                    filteredDispatchBrigadas.map((b) => {
+                                        const isDisabled = !b.disponivel;
+                                        return (
+                                            <label
+                                                key={b.id}
+                                                className={cn(
+                                                    'flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors',
+                                                    isDisabled
+                                                        ? 'cursor-not-allowed opacity-50'
+                                                        : 'cursor-pointer hover:bg-secondary/60',
+                                                )}
+                                            >
+                                                <Checkbox
+                                                    checked={selectedBrigadaIds.has(
+                                                        b.id,
+                                                    )}
+                                                    onCheckedChange={() =>
+                                                        toggleDispatchBrigada(
+                                                            b.id,
+                                                        )
+                                                    }
+                                                    disabled={isDisabled}
+                                                />
+                                                <span className="flex-1 truncate text-sm">
+                                                    {b.nome}
+                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {b.usuarios_count ?? 0}{' '}
+                                                        membro
+                                                        {(b.usuarios_count ??
+                                                            0) !== 1
+                                                            ? 's'
+                                                            : ''}
+                                                    </span>
+                                                    {isDisabled ? (
+                                                        <span className="rounded-full border border-orange-200 bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+                                                            Em operação
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                                                            Disponível
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {selectedBrigadaIds.size > 0 && (
+                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <CheckCircle className="size-3 text-primary" />
+                                    {selectedBrigadaIds.size} brigada
+                                    {selectedBrigadaIds.size !== 1
+                                        ? 's'
+                                        : ''}{' '}
+                                    selecionada
+                                    {selectedBrigadaIds.size !== 1 ? 's' : ''}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        {dispatchStep === 2 && (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setDispatchStep(1);
+                                    setDispatchSearch('');
+                                }}
+                                disabled={dispatchSubmitting}
+                                className="mr-auto"
+                            >
+                                <ArrowLeft className="size-4" />
+                                Voltar
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            onClick={() => setDispatchOpen(false)}
+                            disabled={dispatchSubmitting}
+                        >
+                            Cancelar
+                        </Button>
+                        {dispatchStep === 1 ? (
+                            <Button
+                                onClick={() => {
+                                    setDispatchStep(2);
+                                    setDispatchSearch('');
+                                }}
+                                disabled={!selectedIncendioId}
+                            >
+                                Próximo
+                                <ArrowRight className="size-4" />
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={confirmDispatch}
+                                disabled={
+                                    selectedBrigadaIds.size === 0 ||
+                                    dispatchSubmitting
+                                }
+                            >
+                                {dispatchSubmitting ? (
+                                    'Despachando...'
+                                ) : (
+                                    <>
+                                        <Send className="size-4" />
+                                        Despachar
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

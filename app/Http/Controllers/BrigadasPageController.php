@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\FuncaoUsuario;
+use App\Enums\StatusIncendio;
 use App\Http\Resources\BrigadaResource;
 use App\Models\Brigada;
 use App\Models\DespachoBrigada;
+use App\Models\Incendio;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,12 +58,30 @@ class BrigadasPageController extends Controller
                 ])
             : [];
 
+        $incendiosAtivos = $podeGerenciar
+            ? Incendio::query()
+                ->with('area')
+                ->whereIn('status', [StatusIncendio::Ativo, StatusIncendio::Contido])
+                ->latest('detectado_em')
+                ->get()
+                ->map(fn (Incendio $i): array => [
+                    'id' => $i->id,
+                    'latitude' => $i->latitude,
+                    'longitude' => $i->longitude,
+                    'detectado_em' => $i->detectado_em?->toIso8601String(),
+                    'nivel_risco' => $i->nivel_risco->value,
+                    'status' => $i->status->value,
+                    'area_nome' => $i->area?->nome ?? '—',
+                ])
+            : [];
+
         return Inertia::render('brigadas', [
             'brigadas' => $brigadas,
             'despachosRecentes' => $despachosRecentes,
             'podeGerenciar' => $podeGerenciar,
             'funcaoAutenticado' => $auth->funcao->value,
             'usuariosDisponiveis' => $usuariosDisponiveis,
+            'incendiosAtivos' => $incendiosAtivos,
         ]);
     }
 }
