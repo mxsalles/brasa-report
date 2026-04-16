@@ -1,0 +1,206 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    --color-critical: var(--critical);
+    --color-critical-foreground: var(--critical-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-contained: var(--contained);
+    --color-contained-foreground: var(--contained-foreground);
+    --color-resolved: var(--resolved);
+    --color-resolved-foreground: var(--resolved-foreground);
+}
+
+/**
+ * Escopo das telas de autenticação Canindé (protótipo: azul primário, âmbar accent).
+ */
+.auth-caninde {
+    color-scheme: light;
+
+    --caninde-auth-primary: hsl(210 80% 45%);
+    --caninde-auth-canvas: hsl(0 0% 98%);
+    --caninde-auth-card: #ffffff;
+    --caninde-auth-heading: hsl(220 20% 15%);
+    --caninde-auth-link: hsl(210 80% 45%);
+    --caninde-auth-accent: hsl(36 90% 50%);
+
+    --background: hsl(0 0% 98%);
+    --foreground: hsl(220 20% 15%);
+    --card: #ffffff;
+    --card-foreground: hsl(220 20% 15%);
+    --popover: #ffffff;
+    --popover-foreground: hsl(220 20% 15%);
+
+    --primary: hsl(210 80% 45%);
+    --primary-foreground: #ffffff;
+
+    --secondary: hsl(220 14% 94%);
+    --secondary-foreground: hsl(220 15% 30%);
+
+    --muted: hsl(220 14% 92%);
+    --muted-foreground: hsl(220 10% 46%);
+
+    --accent: hsl(36 90% 50%);
+    --accent-foreground: #ffffff;
+
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: #ffffff;
+
+    --border: hsl(220 13% 88%);
+    --input: hsl(220 13% 88%);
+    --ring: hsl(210 80% 45%);
+}
+
+:root {
+    /* Tema alinhado ao protótipo Canindé (dashboard / shell) */
+    --background: hsl(0 0% 98%);
+    --foreground: hsl(220 20% 15%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(220 20% 15%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(220 20% 15%);
+    --primary: hsl(210 80% 45%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(220 14% 94%);
+    --secondary-foreground: hsl(220 15% 30%);
+    --muted: hsl(220 14% 92%);
+    --muted-foreground: hsl(220 10% 46%);
+    --accent: hsl(36 90% 50%);
+    --accent-foreground: hsl(0 0% 100%);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: hsl(220 13% 88%);
+    --input: hsl(220 13% 88%);
+    --ring: hsl(210 80% 45%);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --radius: 0.625rem;
+    --sidebar: hsl(0 0% 100%);
+    --sidebar-foreground: hsl(220 15% 30%);
+    --sidebar-primary: hsl(210 80% 45%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(220 14% 96%);
+    --sidebar-accent-foreground: hsl(220 15% 30%);
+    --sidebar-border: hsl(220 13% 90%);
+    --sidebar-ring: hsl(210 80% 45%);
+
+    --critical: oklch(0.55 0.22 25);
+    --critical-foreground: oklch(0.985 0 0);
+    --warning: oklch(0.75 0.16 75);
+    --warning-foreground: oklch(0.28 0.06 75);
+    --contained: oklch(0.72 0.14 55);
+    --contained-foreground: oklch(0.28 0.06 55);
+    --resolved: oklch(0.55 0.14 150);
+    --resolved-foreground: oklch(0.985 0 0);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .glass-panel {
+        @apply border border-border bg-card shadow-sm;
+    }
+
+    .glow-amber {
+        box-shadow: 0 0 12px hsl(210 80% 45% / 0.12);
+    }
+
+    .glow-red {
+        box-shadow: 0 0 12px oklch(0.55 0.22 25 / 0.12);
+    }
+
+    .text-gradient-fire {
+        background-image: linear-gradient(
+            135deg,
+            hsl(210 80% 45%) 0%,
+            hsl(160 60% 40%) 100%
+        );
+        background-clip: text;
+        color: transparent;
+    }
+
+    .status-pulse {
+        animation: caninde-pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes caninde-pulse-glow {
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+}
