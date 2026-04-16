@@ -6,6 +6,7 @@ import {
     CheckCircle,
     Clock,
     Flame,
+    ListChecks,
     MapPin,
     Pencil,
     Plus,
@@ -49,7 +50,7 @@ type BrigadaItem = {
     usuarios_count?: number;
 };
 
-type DespachoRecente = {
+type DespachoItem = {
     id: string;
     incendio_id: string;
     brigada_nome: string;
@@ -94,7 +95,8 @@ type IncendioAtivo = {
 
 type PageProps = {
     brigadas: BrigadaItem[];
-    despachosRecentes: DespachoRecente[];
+    despachosAtivos: DespachoItem[];
+    despachosFinalizados: DespachoItem[];
     podeGerenciar: boolean;
     funcaoAutenticado: FuncaoUsuario;
     usuariosDisponiveis: UsuarioDisponivel[];
@@ -178,11 +180,14 @@ function extractErrorMessage(err: unknown, fallback: string): string {
 export default function Brigadas() {
     const {
         brigadas,
-        despachosRecentes,
+        despachosAtivos,
+        despachosFinalizados,
         podeGerenciar,
         usuariosDisponiveis,
         incendiosAtivos,
     } = usePage<PageProps>().props;
+
+    const [aba, setAba] = useState<'brigadas' | 'despachos'>('brigadas');
 
     const [detailOpen, setDetailOpen] = useState(false);
     const [detailData, setDetailData] = useState<BrigadaDetalhe | null>(null);
@@ -223,7 +228,7 @@ export default function Brigadas() {
 
     const [despachoDetailOpen, setDespachoDetailOpen] = useState(false);
     const [selectedDespacho, setSelectedDespacho] =
-        useState<DespachoRecente | null>(null);
+        useState<DespachoItem | null>(null);
     const [despachoActionLoading, setDespachoActionLoading] = useState(false);
     const [finalizarObs, setFinalizarObs] = useState('');
 
@@ -506,7 +511,7 @@ export default function Brigadas() {
         }
     }, [selectedIncendio, selectedBrigadaIds]);
 
-    const openDespachoDetail = useCallback((despacho: DespachoRecente) => {
+    const openDespachoDetail = useCallback((despacho: DespachoItem) => {
         setSelectedDespacho(despacho);
         setFinalizarObs('');
         setDespachoDetailOpen(true);
@@ -574,211 +579,336 @@ export default function Brigadas() {
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-start justify-between gap-4"
                 >
-                    <div>
-                        <h1 className="text-2xl font-bold">Brigadas</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Equipes de combate a incêndio
-                        </p>
-                    </div>
-                    {podeGerenciar && (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={openDispatch}
-                            >
-                                <Send className="size-4" />
-                                Despachar
-                            </Button>
-                            <Button onClick={openCreate}>
-                                <Plus className="size-4" />
-                                Nova Brigada
-                            </Button>
-                        </div>
-                    )}
+                    <h1 className="text-2xl font-bold">Brigadas</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Equipes de combate a incêndio e despachos
+                    </p>
                 </motion.div>
 
-                {brigadas.length === 0 ? (
-                    <div className="glass-panel rounded-xl p-8 text-center text-muted-foreground">
-                        Nenhuma brigada cadastrada.
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {brigadas.map((brigada, i) => {
-                            const disponivel = brigada.disponivel;
-                            return (
-                                <motion.div
-                                    key={brigada.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.07 }}
-                                    className="glass-panel cursor-pointer rounded-xl p-5 transition-shadow hover:shadow-md"
-                                    onClick={() => openDetail(brigada.id)}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ')
-                                            openDetail(brigada.id);
-                                    }}
-                                >
-                                    <div className="mb-3 flex items-start justify-between">
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="text-lg font-bold">
-                                                {brigada.nome}
-                                            </h3>
-                                            <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                <MapPin className="size-3 shrink-0" />
-                                                {brigada.tipo}
-                                            </p>
-                                        </div>
-                                        <span
-                                            className={cn(
-                                                'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
-                                                disponivel
-                                                    ? 'border-resolved/30 bg-resolved/15 text-resolved'
-                                                    : 'border-border bg-muted text-muted-foreground',
-                                            )}
+                <div className="grid w-full max-w-md grid-cols-2 gap-2 rounded-lg border border-border bg-muted/40 p-1">
+                    <button
+                        type="button"
+                        onClick={() => setAba('brigadas')}
+                        className={cn(
+                            'flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                            aba === 'brigadas'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground',
+                        )}
+                    >
+                        <Users className="size-4" />
+                        Brigadas
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setAba('despachos')}
+                        className={cn(
+                            'flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                            aba === 'despachos'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground',
+                        )}
+                    >
+                        <ListChecks className="size-4" />
+                        Despachos
+                    </button>
+                </div>
+
+                {aba === 'brigadas' && (
+                    <>
+                        {podeGerenciar && (
+                            <div className="flex justify-end">
+                                <Button onClick={openCreate}>
+                                    <Plus className="size-4" />
+                                    Nova Brigada
+                                </Button>
+                            </div>
+                        )}
+
+                        {brigadas.length === 0 ? (
+                            <div className="glass-panel rounded-xl p-8 text-center text-muted-foreground">
+                                Nenhuma brigada cadastrada.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {brigadas.map((brigada, i) => {
+                                    const disponivel = brigada.disponivel;
+                                    return (
+                                        <motion.div
+                                            key={brigada.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{
+                                                delay: i * 0.07,
+                                            }}
+                                            className="glass-panel cursor-pointer rounded-xl p-5 transition-shadow hover:shadow-md"
+                                            onClick={() =>
+                                                openDetail(brigada.id)
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (
+                                                    e.key === 'Enter' ||
+                                                    e.key === ' '
+                                                )
+                                                    openDetail(brigada.id);
+                                            }}
                                         >
-                                            {disponivel ? (
-                                                <UserCheck className="size-3" />
-                                            ) : (
-                                                <UserX className="size-3" />
-                                            )}
-                                            {disponivel
-                                                ? 'Disponível'
-                                                : 'Indisponível'}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Users className="size-4 text-muted-foreground" />
-                                            <span className="text-sm">
-                                                {brigada.usuarios_count ?? 0}{' '}
-                                                membro
-                                                {(brigada.usuarios_count ??
-                                                    0) !== 1
-                                                    ? 's'
-                                                    : ''}
-                                            </span>
-                                        </div>
-
-                                        {podeGerenciar && (
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8"
-                                                    onClick={(e) =>
-                                                        openEdit(e, brigada)
-                                                    }
-                                                    title="Editar brigada"
+                                            <div className="mb-3 flex items-start justify-between">
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-lg font-bold">
+                                                        {brigada.nome}
+                                                    </h3>
+                                                    <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                        <MapPin className="size-3 shrink-0" />
+                                                        {brigada.tipo}
+                                                    </p>
+                                                </div>
+                                                <span
+                                                    className={cn(
+                                                        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                                                        disponivel
+                                                            ? 'border-resolved/30 bg-resolved/15 text-resolved'
+                                                            : 'border-border bg-muted text-muted-foreground',
+                                                    )}
                                                 >
-                                                    <Pencil className="size-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8 text-destructive hover:text-destructive"
-                                                    onClick={(e) =>
-                                                        openDelete(e, brigada)
-                                                    }
-                                                    title="Remover brigada"
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </Button>
+                                                    {disponivel ? (
+                                                        <UserCheck className="size-3" />
+                                                    ) : (
+                                                        <UserX className="size-3" />
+                                                    )}
+                                                    {disponivel
+                                                        ? 'Disponível'
+                                                        : 'Indisponível'}
+                                                </span>
                                             </div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="size-4 text-muted-foreground" />
+                                                    <span className="text-sm">
+                                                        {brigada.usuarios_count ??
+                                                            0}{' '}
+                                                        membro
+                                                        {(brigada.usuarios_count ??
+                                                            0) !== 1
+                                                            ? 's'
+                                                            : ''}
+                                                    </span>
+                                                </div>
+
+                                                {podeGerenciar && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8"
+                                                            onClick={(e) =>
+                                                                openEdit(
+                                                                    e,
+                                                                    brigada,
+                                                                )
+                                                            }
+                                                            title="Editar brigada"
+                                                        >
+                                                            <Pencil className="size-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-destructive hover:text-destructive"
+                                                            onClick={(e) =>
+                                                                openDelete(
+                                                                    e,
+                                                                    brigada,
+                                                                )
+                                                            }
+                                                            title="Remover brigada"
+                                                        >
+                                                            <Trash2 className="size-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </>
                 )}
 
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="glass-panel rounded-xl p-5"
-                >
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-                        <Clock className="size-4 text-primary" />
-                        Despachos Recentes
-                    </h3>
-                    {despachosRecentes.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                            Nenhum despacho recente.
-                        </p>
-                    ) : (
-                        <div className="space-y-3">
-                            {despachosRecentes.map((d) => (
-                                <div
-                                    key={d.id}
-                                    className={cn(
-                                        'rounded-lg bg-secondary/50 p-3',
-                                        podeGerenciar &&
-                                            'cursor-pointer transition-colors hover:bg-secondary/80',
-                                    )}
-                                    onClick={
-                                        podeGerenciar
-                                            ? () => openDespachoDetail(d)
-                                            : undefined
-                                    }
-                                    role={podeGerenciar ? 'button' : undefined}
-                                    tabIndex={podeGerenciar ? 0 : undefined}
-                                    onKeyDown={
-                                        podeGerenciar
-                                            ? (e) => {
-                                                  if (
-                                                      e.key === 'Enter' ||
-                                                      e.key === ' '
-                                                  )
-                                                      openDespachoDetail(d);
-                                              }
-                                            : undefined
-                                    }
+                {aba === 'despachos' && (
+                    <>
+                        {podeGerenciar && (
+                            <div className="flex justify-end">
+                                <Button
+                                    variant="outline"
+                                    onClick={openDispatch}
                                 >
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div>
-                                            <span className="text-sm font-medium">
-                                                {d.brigada_nome}
-                                            </span>
-                                            <span className="ml-2 text-xs text-muted-foreground">
-                                                → {d.incendio_area_nome}
-                                            </span>
-                                        </div>
-                                        <span
+                                    <Send className="size-4" />
+                                    Despachar Brigadas
+                                </Button>
+                            </div>
+                        )}
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="glass-panel rounded-xl p-5"
+                        >
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+                                <Clock className="size-4 text-warning" />
+                                Despachos Ativos
+                            </h3>
+                            {despachosAtivos.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Nenhum despacho ativo no momento.
+                                </p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {despachosAtivos.map((d) => (
+                                        <div
+                                            key={d.id}
                                             className={cn(
-                                                'rounded-full px-2 py-0.5 text-xs font-semibold',
-                                                d.finalizado_em
-                                                    ? 'bg-resolved/15 text-resolved'
-                                                    : d.chegada_em
-                                                      ? 'bg-contained/15 text-contained'
-                                                      : 'bg-warning/15 text-warning',
+                                                'rounded-lg bg-secondary/50 p-3',
+                                                podeGerenciar &&
+                                                    'cursor-pointer transition-colors hover:bg-secondary/80',
                                             )}
+                                            onClick={
+                                                podeGerenciar
+                                                    ? () =>
+                                                          openDespachoDetail(d)
+                                                    : undefined
+                                            }
+                                            role={
+                                                podeGerenciar
+                                                    ? 'button'
+                                                    : undefined
+                                            }
+                                            tabIndex={
+                                                podeGerenciar ? 0 : undefined
+                                            }
+                                            onKeyDown={
+                                                podeGerenciar
+                                                    ? (e) => {
+                                                          if (
+                                                              e.key ===
+                                                                  'Enter' ||
+                                                              e.key === ' '
+                                                          )
+                                                              openDespachoDetail(
+                                                                  d,
+                                                              );
+                                                      }
+                                                    : undefined
+                                            }
                                         >
-                                            {d.finalizado_em
-                                                ? 'Finalizado'
-                                                : d.chegada_em
-                                                  ? 'No local'
-                                                  : 'Em deslocamento'}
-                                        </span>
-                                    </div>
-                                    {d.despachado_em && (
-                                        <p className="mt-1 text-[11px] text-muted-foreground">
-                                            Despachado:{' '}
-                                            {new Date(
-                                                d.despachado_em,
-                                            ).toLocaleString('pt-BR')}
-                                        </p>
-                                    )}
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="text-sm font-medium">
+                                                        {d.brigada_nome}
+                                                    </span>
+                                                    <span className="ml-2 text-xs text-muted-foreground">
+                                                        →{' '}
+                                                        {
+                                                            d.incendio_area_nome
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <span
+                                                    className={cn(
+                                                        'rounded-full px-2 py-0.5 text-xs font-semibold',
+                                                        d.chegada_em
+                                                            ? 'bg-contained/15 text-contained'
+                                                            : 'bg-warning/15 text-warning',
+                                                    )}
+                                                >
+                                                    {d.chegada_em
+                                                        ? 'No local'
+                                                        : 'Em deslocamento'}
+                                                </span>
+                                            </div>
+                                            {d.despachado_em && (
+                                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                                    Despachado:{' '}
+                                                    {new Date(
+                                                        d.despachado_em,
+                                                    ).toLocaleString('pt-BR')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </motion.div>
+                            )}
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="glass-panel rounded-xl p-5"
+                        >
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+                                <CheckCircle className="size-4 text-resolved" />
+                                Histórico
+                            </h3>
+                            {despachosFinalizados.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Nenhum despacho finalizado.
+                                </p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {despachosFinalizados.map((d) => (
+                                        <div
+                                            key={d.id}
+                                            className="cursor-pointer rounded-lg bg-secondary/50 p-3 transition-colors hover:bg-secondary/80"
+                                            onClick={() =>
+                                                openDespachoDetail(d)
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (
+                                                    e.key === 'Enter' ||
+                                                    e.key === ' '
+                                                )
+                                                    openDespachoDetail(d);
+                                            }}
+                                        >
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="text-sm font-medium">
+                                                        {d.brigada_nome}
+                                                    </span>
+                                                    <span className="ml-2 text-xs text-muted-foreground">
+                                                        →{' '}
+                                                        {
+                                                            d.incendio_area_nome
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <span className="rounded-full bg-resolved/15 px-2 py-0.5 text-xs font-semibold text-resolved">
+                                                    Finalizado
+                                                </span>
+                                            </div>
+                                            {d.finalizado_em && (
+                                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                                    Finalizado:{' '}
+                                                    {new Date(
+                                                        d.finalizado_em,
+                                                    ).toLocaleString('pt-BR')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    </>
+                )}
             </div>
 
             {/* Dialog de detalhes */}

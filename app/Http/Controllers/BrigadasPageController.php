@@ -23,21 +23,31 @@ class BrigadasPageController extends Controller
             ->get()
             ->map(fn (Brigada $brigada): array => (new BrigadaResource($brigada))->resolve());
 
-        $despachosRecentes = DespachoBrigada::query()
+        $mapDespacho = fn (DespachoBrigada $d): array => [
+            'id' => $d->id,
+            'incendio_id' => $d->incendio_id,
+            'brigada_nome' => $d->brigada?->nome ?? '—',
+            'incendio_area_nome' => $d->incendio?->area?->nome ?? '—',
+            'despachado_em' => $d->despachado_em?->toIso8601String(),
+            'chegada_em' => $d->chegada_em?->toIso8601String(),
+            'finalizado_em' => $d->finalizado_em?->toIso8601String(),
+            'observacoes' => $d->observacoes,
+        ];
+
+        $despachosAtivos = DespachoBrigada::query()
             ->with(['brigada', 'incendio.area'])
+            ->whereNull('finalizado_em')
             ->latest('despachado_em')
-            ->limit(5)
             ->get()
-            ->map(fn (DespachoBrigada $d): array => [
-                'id' => $d->id,
-                'incendio_id' => $d->incendio_id,
-                'brigada_nome' => $d->brigada?->nome ?? '—',
-                'incendio_area_nome' => $d->incendio?->area?->nome ?? '—',
-                'despachado_em' => $d->despachado_em?->toIso8601String(),
-                'chegada_em' => $d->chegada_em?->toIso8601String(),
-                'finalizado_em' => $d->finalizado_em?->toIso8601String(),
-                'observacoes' => $d->observacoes,
-            ]);
+            ->map($mapDespacho);
+
+        $despachosFinalizados = DespachoBrigada::query()
+            ->with(['brigada', 'incendio.area'])
+            ->whereNotNull('finalizado_em')
+            ->latest('finalizado_em')
+            ->limit(20)
+            ->get()
+            ->map($mapDespacho);
 
         /** @var Usuario $auth */
         $auth = $request->user();
@@ -79,7 +89,8 @@ class BrigadasPageController extends Controller
 
         return Inertia::render('brigadas', [
             'brigadas' => $brigadas,
-            'despachosRecentes' => $despachosRecentes,
+            'despachosAtivos' => $despachosAtivos,
+            'despachosFinalizados' => $despachosFinalizados,
             'podeGerenciar' => $podeGerenciar,
             'funcaoAutenticado' => $auth->funcao->value,
             'usuariosDisponiveis' => $usuariosDisponiveis,
