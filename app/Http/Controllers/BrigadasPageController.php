@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\FuncaoUsuario;
+use App\Http\Resources\BrigadaResource;
+use App\Models\Brigada;
+use App\Models\DespachoBrigada;
+use App\Models\Usuario;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class BrigadasPageController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $brigadas = Brigada::query()
+            ->withCount('usuarios')
+            ->orderBy('nome')
+            ->get()
+            ->map(fn (Brigada $brigada): array => (new BrigadaResource($brigada))->resolve());
+
+        $despachosRecentes = DespachoBrigada::query()
+            ->with(['brigada', 'incendio.area'])
+            ->latest('despachado_em')
+            ->limit(5)
+            ->get()
+            ->map(fn (DespachoBrigada $d): array => [
+                'id' => $d->id,
+                'brigada_nome' => $d->brigada?->nome ?? '—',
+                'incendio_area_nome' => $d->incendio?->area?->nome ?? '—',
+                'despachado_em' => $d->despachado_em?->toIso8601String(),
+                'chegada_em' => $d->chegada_em?->toIso8601String(),
+                'finalizado_em' => $d->finalizado_em?->toIso8601String(),
+            ]);
+
+        /** @var Usuario $auth */
+        $auth = $request->user();
+
+        $podeGerenciar = in_array($auth->funcao, [
+            FuncaoUsuario::Gestor,
+            FuncaoUsuario::Administrador,
+        ], true);
+
+        $usuariosDisponiveis = $podeGerenciar
+            ? Usuario::query()
+                ->whereNull('brigada_id')
+                ->where('bloqueado', false)
+                ->orderBy('nome')
+                ->get()
+                ->map(fn (Usuario $u): array => [
+                    'id' => $u->id,
+                    'nome' => $u->nome,
+                    'funcao' => $u->funcao->value,
+                ])
+            : [];
+
+        return Inertia::render('brigadas', [
+            'brigadas' => $brigadas,
+            'despachosRecentes' => $despachosRecentes,
+            'podeGerenciar' => $podeGerenciar,
+            'funcaoAutenticado' => $auth->funcao->value,
+            'usuariosDisponiveis' => $usuariosDisponiveis,
+        ]);
+    }
+}
