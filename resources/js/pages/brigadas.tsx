@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import axios from '@/lib/axios-setup';
 import { cn } from '@/lib/utils';
@@ -50,11 +51,13 @@ type BrigadaItem = {
 
 type DespachoRecente = {
     id: string;
+    incendio_id: string;
     brigada_nome: string;
     incendio_area_nome: string;
     despachado_em: string | null;
     chegada_em: string | null;
     finalizado_em: string | null;
+    observacoes: string | null;
 };
 
 type UsuarioDisponivel = {
@@ -217,6 +220,12 @@ export default function Brigadas() {
     );
     const [dispatchSearch, setDispatchSearch] = useState('');
     const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
+
+    const [despachoDetailOpen, setDespachoDetailOpen] = useState(false);
+    const [selectedDespacho, setSelectedDespacho] =
+        useState<DespachoRecente | null>(null);
+    const [despachoActionLoading, setDespachoActionLoading] = useState(false);
+    const [finalizarObs, setFinalizarObs] = useState('');
 
     const candidateMembros = useMemo(() => {
         const all: UsuarioDisponivel[] = [
@@ -497,6 +506,67 @@ export default function Brigadas() {
         }
     }, [selectedIncendio, selectedBrigadaIds]);
 
+    const openDespachoDetail = useCallback((despacho: DespachoRecente) => {
+        setSelectedDespacho(despacho);
+        setFinalizarObs('');
+        setDespachoDetailOpen(true);
+    }, []);
+
+    const despachoStatus = useMemo(() => {
+        if (!selectedDespacho) return null;
+        if (selectedDespacho.finalizado_em) return 'finalizado' as const;
+        if (selectedDespacho.chegada_em) return 'no_local' as const;
+        return 'em_deslocamento' as const;
+    }, [selectedDespacho]);
+
+    const registrarChegada = useCallback(async () => {
+        if (!selectedDespacho) return;
+        setDespachoActionLoading(true);
+        try {
+            await axios.patch(
+                `/api/incendios/${selectedDespacho.incendio_id}/despachos/${selectedDespacho.id}/chegada`,
+                { chegada_em: new Date().toISOString() },
+            );
+            toast.success('Chegada registrada com sucesso.');
+            setDespachoDetailOpen(false);
+            router.reload();
+        } catch (err: unknown) {
+            toast.error(
+                extractErrorMessage(err, 'Não foi possível registrar a chegada.'),
+            );
+        } finally {
+            setDespachoActionLoading(false);
+        }
+    }, [selectedDespacho]);
+
+    const finalizarDespacho = useCallback(async () => {
+        if (!selectedDespacho) return;
+        setDespachoActionLoading(true);
+        try {
+            await axios.patch(
+                `/api/incendios/${selectedDespacho.incendio_id}/despachos/${selectedDespacho.id}/finalizar`,
+                {
+                    finalizado_em: new Date().toISOString(),
+                    ...(finalizarObs.trim()
+                        ? { observacoes: finalizarObs.trim() }
+                        : {}),
+                },
+            );
+            toast.success('Despacho finalizado com sucesso.');
+            setDespachoDetailOpen(false);
+            router.reload();
+        } catch (err: unknown) {
+            toast.error(
+                extractErrorMessage(
+                    err,
+                    'Não foi possível finalizar o despacho.',
+                ),
+            );
+        } finally {
+            setDespachoActionLoading(false);
+        }
+    }, [selectedDespacho, finalizarObs]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Brigadas" />
@@ -646,7 +716,29 @@ export default function Brigadas() {
                             {despachosRecentes.map((d) => (
                                 <div
                                     key={d.id}
-                                    className="rounded-lg bg-secondary/50 p-3"
+                                    className={cn(
+                                        'rounded-lg bg-secondary/50 p-3',
+                                        podeGerenciar &&
+                                            'cursor-pointer transition-colors hover:bg-secondary/80',
+                                    )}
+                                    onClick={
+                                        podeGerenciar
+                                            ? () => openDespachoDetail(d)
+                                            : undefined
+                                    }
+                                    role={podeGerenciar ? 'button' : undefined}
+                                    tabIndex={podeGerenciar ? 0 : undefined}
+                                    onKeyDown={
+                                        podeGerenciar
+                                            ? (e) => {
+                                                  if (
+                                                      e.key === 'Enter' ||
+                                                      e.key === ' '
+                                                  )
+                                                      openDespachoDetail(d);
+                                              }
+                                            : undefined
+                                    }
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <div>
@@ -981,6 +1073,182 @@ export default function Brigadas() {
                             {deleteLoading ? 'Removendo...' : 'Remover'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog de gerenciamento de status do despacho */}
+            <Dialog
+                open={despachoDetailOpen}
+                onOpenChange={(open) => {
+                    if (!despachoActionLoading) setDespachoDetailOpen(open);
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Detalhes do Despacho</DialogTitle>
+                        <DialogDescription>
+                            Gerencie o status deste despacho
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedDespacho && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        Brigada
+                                    </span>
+                                    <p className="font-medium">
+                                        {selectedDespacho.brigada_nome}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        Incêndio
+                                    </span>
+                                    <p className="font-medium">
+                                        {selectedDespacho.incendio_area_nome}
+                                    </p>
+                                </div>
+                                {selectedDespacho.despachado_em && (
+                                    <div>
+                                        <span className="text-muted-foreground">
+                                            Despachado em
+                                        </span>
+                                        <p className="font-medium">
+                                            {new Date(
+                                                selectedDespacho.despachado_em,
+                                            ).toLocaleString('pt-BR')}
+                                        </p>
+                                    </div>
+                                )}
+                                {selectedDespacho.chegada_em && (
+                                    <div>
+                                        <span className="text-muted-foreground">
+                                            Chegada em
+                                        </span>
+                                        <p className="font-medium">
+                                            {new Date(
+                                                selectedDespacho.chegada_em,
+                                            ).toLocaleString('pt-BR')}
+                                        </p>
+                                    </div>
+                                )}
+                                {selectedDespacho.finalizado_em && (
+                                    <div>
+                                        <span className="text-muted-foreground">
+                                            Finalizado em
+                                        </span>
+                                        <p className="font-medium">
+                                            {new Date(
+                                                selectedDespacho.finalizado_em,
+                                            ).toLocaleString('pt-BR')}
+                                        </p>
+                                    </div>
+                                )}
+                                <div className="col-span-2">
+                                    <span className="text-muted-foreground">
+                                        Status
+                                    </span>
+                                    <p>
+                                        <span
+                                            className={cn(
+                                                'inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                                                despachoStatus === 'finalizado'
+                                                    ? 'bg-resolved/15 text-resolved'
+                                                    : despachoStatus ===
+                                                        'no_local'
+                                                      ? 'bg-contained/15 text-contained'
+                                                      : 'bg-warning/15 text-warning',
+                                            )}
+                                        >
+                                            {despachoStatus === 'finalizado'
+                                                ? 'Finalizado'
+                                                : despachoStatus === 'no_local'
+                                                  ? 'No local'
+                                                  : 'Em deslocamento'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {selectedDespacho.observacoes && (
+                                <div className="text-sm">
+                                    <span className="text-muted-foreground">
+                                        Observações
+                                    </span>
+                                    <p className="mt-1 rounded-md bg-secondary/50 p-2 text-sm">
+                                        {selectedDespacho.observacoes}
+                                    </p>
+                                </div>
+                            )}
+
+                            {despachoStatus === 'em_deslocamento' && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+                                    <p className="mb-3 text-sm text-amber-800 dark:text-amber-200">
+                                        A brigada está a caminho do incêndio.
+                                        Registre a chegada quando a brigada
+                                        chegar ao local.
+                                    </p>
+                                    <Button
+                                        onClick={registrarChegada}
+                                        disabled={despachoActionLoading}
+                                        className="w-full"
+                                    >
+                                        {despachoActionLoading
+                                            ? 'Registrando...'
+                                            : 'Registrar Chegada'}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {despachoStatus === 'no_local' && (
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                                    <p className="mb-3 text-sm text-blue-800 dark:text-blue-200">
+                                        A brigada está no local do incêndio.
+                                        Finalize quando a operação for
+                                        concluída.
+                                    </p>
+                                    <div className="mb-3 space-y-2">
+                                        <Label
+                                            htmlFor="finalizar-obs"
+                                            className="text-xs text-blue-700 dark:text-blue-300"
+                                        >
+                                            Observações (opcional)
+                                        </Label>
+                                        <Textarea
+                                            id="finalizar-obs"
+                                            value={finalizarObs}
+                                            onChange={(e) =>
+                                                setFinalizarObs(e.target.value)
+                                            }
+                                            placeholder="Ex: Fogo contido, sem vítimas..."
+                                            maxLength={1000}
+                                            rows={2}
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={finalizarDespacho}
+                                        disabled={despachoActionLoading}
+                                        className="w-full"
+                                    >
+                                        {despachoActionLoading
+                                            ? 'Finalizando...'
+                                            : 'Finalizar Despacho'}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {despachoStatus === 'finalizado' && (
+                                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
+                                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                                        Este despacho foi finalizado. A brigada
+                                        está disponível para novas operações.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

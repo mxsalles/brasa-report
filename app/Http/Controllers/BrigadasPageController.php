@@ -30,11 +30,13 @@ class BrigadasPageController extends Controller
             ->get()
             ->map(fn (DespachoBrigada $d): array => [
                 'id' => $d->id,
+                'incendio_id' => $d->incendio_id,
                 'brigada_nome' => $d->brigada?->nome ?? '—',
                 'incendio_area_nome' => $d->incendio?->area?->nome ?? '—',
                 'despachado_em' => $d->despachado_em?->toIso8601String(),
                 'chegada_em' => $d->chegada_em?->toIso8601String(),
                 'finalizado_em' => $d->finalizado_em?->toIso8601String(),
+                'observacoes' => $d->observacoes,
             ]);
 
         /** @var Usuario $auth */
