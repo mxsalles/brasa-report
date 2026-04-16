@@ -124,28 +124,44 @@ test('brigadas incluem usuarios_count', function () {
         ->and($item['usuarios_count'])->toBe(2);
 });
 
-test('despachos recentes aparecem nas props', function () {
+test('despachos ativos aparecem nas props', function () {
     $usuario = Usuario::factory()->verified()->create();
-    DespachoBrigada::factory()->count(2)->create();
+    DespachoBrigada::factory()->count(2)->create(['finalizado_em' => null]);
 
     $response = $this->actingAs($usuario)
         ->get(route('brigadas'));
 
     $props = $response->original->getData()['page']['props'];
 
-    expect($props['despachosRecentes'])->toHaveCount(2);
+    expect($props['despachosAtivos'])->toHaveCount(2)
+        ->and($props['despachosFinalizados'])->toBeEmpty();
 });
 
-test('despachos recentes limitados a 5', function () {
+test('despachos finalizados aparecem nas props com limite de 20', function () {
     $usuario = Usuario::factory()->verified()->create();
-    DespachoBrigada::factory()->count(8)->create();
+    DespachoBrigada::factory()->count(22)->create(['finalizado_em' => now()]);
 
     $response = $this->actingAs($usuario)
         ->get(route('brigadas'));
 
     $props = $response->original->getData()['page']['props'];
 
-    expect($props['despachosRecentes'])->toHaveCount(5);
+    expect($props['despachosFinalizados'])->toHaveCount(20)
+        ->and($props['despachosAtivos'])->toBeEmpty();
+});
+
+test('despachos separados corretamente entre ativos e finalizados', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    DespachoBrigada::factory()->count(3)->create(['finalizado_em' => null]);
+    DespachoBrigada::factory()->count(2)->create(['finalizado_em' => now()]);
+
+    $response = $this->actingAs($usuario)
+        ->get(route('brigadas'));
+
+    $props = $response->original->getData()['page']['props'];
+
+    expect($props['despachosAtivos'])->toHaveCount(3)
+        ->and($props['despachosFinalizados'])->toHaveCount(2);
 });
 
 test('usuario bloqueado nao acessa pagina de brigadas', function () {
@@ -253,16 +269,17 @@ test('incendios resolvidos nao aparecem em incendiosAtivos', function () {
     expect($ids)->not->toContain($resolvido->id);
 });
 
-test('despachos recentes incluem incendio_id e observacoes', function () {
+test('despachos incluem incendio_id e observacoes', function () {
     $usuario = Usuario::factory()->verified()->create();
     $despacho = DespachoBrigada::factory()->create([
         'observacoes' => 'Prioridade máxima',
+        'finalizado_em' => null,
     ]);
 
     $response = $this->actingAs($usuario)->get(route('brigadas'));
     $props = $response->original->getData()['page']['props'];
 
-    $item = collect($props['despachosRecentes'])->firstWhere('id', $despacho->id);
+    $item = collect($props['despachosAtivos'])->firstWhere('id', $despacho->id);
 
     expect($item)->not->toBeNull()
         ->and($item)->toHaveKeys(['incendio_id', 'observacoes'])
