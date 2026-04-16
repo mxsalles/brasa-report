@@ -26,11 +26,14 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
 
     Route::middleware('funcao:user|brigadista|gestor|administrador')->group(function (): void {
         Route::get('/dashboard', [DashboardController::class, 'dados']);
+        Route::get('/brigadas', [BrigadaController::class, 'index']);
+        Route::get('/brigadas/{brigada}', [BrigadaController::class, 'show']);
     });
 
     Route::middleware('funcao:gestor|administrador')->group(function (): void {
-        Route::get('/brigadas', [BrigadaController::class, 'index']);
-        Route::get('/brigadas/{brigada}', [BrigadaController::class, 'show']);
+        Route::post('/brigadas', [BrigadaController::class, 'store']);
+        Route::put('/brigadas/{brigada}', [BrigadaController::class, 'update']);
+        Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
 
         Route::get('/areas-monitoradas', [AreaMonitoradaController::class, 'index']);
         Route::get('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'show']);
@@ -43,9 +46,6 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
     });
 
     Route::middleware('funcao:administrador')->group(function (): void {
-        Route::post('/brigadas', [BrigadaController::class, 'store']);
-        Route::put('/brigadas/{brigada}', [BrigadaController::class, 'update']);
-        Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
 
         Route::post('/areas-monitoradas', [AreaMonitoradaController::class, 'store']);
         Route::put('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'update']);
