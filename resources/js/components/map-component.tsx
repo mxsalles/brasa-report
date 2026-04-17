@@ -136,6 +136,7 @@ export function MapComponent({
             const color = getMarkerColor(inc.status);
             const marker = L.marker([inc.latitude, inc.longitude], {
                 icon: createFireIcon(color),
+                opacity: inc.status === 'resolvido' ? 0.4 : 1,
             }).addTo(map);
 
             const riskLabel = inc.nivel_risco.toUpperCase();
