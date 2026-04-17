@@ -14,6 +14,10 @@ const statusConfig: Record<
         label: 'Ativo',
         className: 'border-critical/30 bg-critical/15 text-critical',
     },
+    em_combate: {
+        label: 'Em Combate',
+        className: 'border-warning/30 bg-warning/15 text-warning',
+    },
     contido: {
         label: 'Contido',
         className: 'border-contained/30 bg-contained/15 text-contained',
@@ -35,7 +39,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
                 className,
             )}
         >
-            {status === 'ativo' ? (
+            {status === 'ativo' || status === 'em_combate' ? (
                 <span className="status-pulse size-1.5 rounded-full bg-critical" />
             ) : null}
             {config.label}

@@ -33,12 +33,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import axios from '@/lib/axios-setup';
 import { cn } from '@/lib/utils';
 import { brigadas as brigadasRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import type { FuncaoUsuario } from '@/types/auth';
+import type { StatusIncendio } from '@/types/dashboard';
+
+type OperacaoIncendioBrigada = {
+    fase: 'em_deslocamento' | 'em_combate';
+    incendio_status: StatusIncendio;
+    area_nome: string;
+};
 
 type BrigadaItem = {
     id: string;
@@ -48,6 +56,7 @@ type BrigadaItem = {
     longitude_atual: string | null;
     disponivel: boolean;
     usuarios_count?: number;
+    operacao_incendio: OperacaoIncendioBrigada | null;
 };
 
 type DespachoItem = {
@@ -286,6 +295,9 @@ export default function Brigadas() {
     const openEdit = useCallback(
         async (e: React.MouseEvent, brigada: BrigadaItem) => {
             e.stopPropagation();
+            if (brigada.operacao_incendio) {
+                return;
+            }
             setEditingId(brigada.id);
             setFormData({
                 nome: brigada.nome,
@@ -320,6 +332,9 @@ export default function Brigadas() {
     const openDelete = useCallback(
         (e: React.MouseEvent, brigada: BrigadaItem) => {
             e.stopPropagation();
+            if (brigada.operacao_incendio) {
+                return;
+            }
             setDeletingBrigada(brigada);
             setDeleteOpen(true);
         },
@@ -634,6 +649,8 @@ export default function Brigadas() {
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {brigadas.map((brigada, i) => {
                                     const disponivel = brigada.disponivel;
+                                    const emOperacao =
+                                        brigada.operacao_incendio !== null;
                                     return (
                                         <motion.div
                                             key={brigada.id}
@@ -665,6 +682,53 @@ export default function Brigadas() {
                                                         <MapPin className="size-3 shrink-0" />
                                                         {brigada.tipo}
                                                     </p>
+                                                    {brigada.operacao_incendio && (
+                                                        <div className="mt-2 space-y-1">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <StatusBadge
+                                                                    status={
+                                                                        brigada
+                                                                            .operacao_incendio
+                                                                            .incendio_status
+                                                                    }
+                                                                />
+                                                                <span
+                                                                    className={cn(
+                                                                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                                                                        brigada
+                                                                            .operacao_incendio
+                                                                            .fase ===
+                                                                            'em_deslocamento'
+                                                                            ? 'border-warning/30 bg-warning/15 text-warning'
+                                                                            : 'border-contained/30 bg-contained/15 text-contained',
+                                                                    )}
+                                                                >
+                                                                    {brigada
+                                                                        .operacao_incendio
+                                                                        .fase ===
+                                                                    'em_deslocamento' ? (
+                                                                        <Send className="size-3 shrink-0" />
+                                                                    ) : (
+                                                                        <Flame className="size-3 shrink-0" />
+                                                                    )}
+                                                                    {brigada
+                                                                        .operacao_incendio
+                                                                        .fase ===
+                                                                    'em_deslocamento'
+                                                                        ? 'Em deslocamento'
+                                                                        : 'Em combate'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                →{' '}
+                                                                {
+                                                                    brigada
+                                                                        .operacao_incendio
+                                                                        .area_nome
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <span
                                                     className={cn(
@@ -705,13 +769,18 @@ export default function Brigadas() {
                                                             variant="ghost"
                                                             size="icon"
                                                             className="size-8"
+                                                            disabled={emOperacao}
                                                             onClick={(e) =>
                                                                 openEdit(
                                                                     e,
                                                                     brigada,
                                                                 )
                                                             }
-                                                            title="Editar brigada"
+                                                            title={
+                                                                emOperacao
+                                                                    ? 'Indisponível enquanto a brigada estiver em deslocamento ou em combate'
+                                                                    : 'Editar brigada'
+                                                            }
                                                         >
                                                             <Pencil className="size-3.5" />
                                                         </Button>
@@ -719,13 +788,18 @@ export default function Brigadas() {
                                                             variant="ghost"
                                                             size="icon"
                                                             className="size-8 text-destructive hover:text-destructive"
+                                                            disabled={emOperacao}
                                                             onClick={(e) =>
                                                                 openDelete(
                                                                     e,
                                                                     brigada,
                                                                 )
                                                             }
-                                                            title="Remover brigada"
+                                                            title={
+                                                                emOperacao
+                                                                    ? 'Indisponível enquanto a brigada estiver em deslocamento ou em combate'
+                                                                    : 'Remover brigada'
+                                                            }
                                                         >
                                                             <Trash2 className="size-3.5" />
                                                         </Button>

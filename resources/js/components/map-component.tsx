@@ -3,21 +3,42 @@ import { useEffect, useRef } from 'react';
 
 import 'leaflet/dist/leaflet.css';
 
-import type { IncendioMapa } from '@/types/operacoes';
+import type { StatusIncendio } from '@/types/dashboard';
+
+export type MapIncendio = {
+    id: string;
+    latitude: number;
+    longitude: number;
+    status: StatusIncendio;
+    nivel_risco: string;
+    area_nome: string;
+    detectado_em?: string | null;
+    local_critico_nome?: string | null;
+};
 
 type MapComponentProps = {
-    incendios: IncendioMapa[];
+    incendios: MapIncendio[];
     center?: [number, number];
     zoom?: number;
     className?: string;
     onMapClick?: (lat: number, lng: number) => void;
+    onMarkerClick?: (incendioId: string) => void;
     selectedPoint?: { lat: number; lng: number } | null;
 };
 
-function getMarkerColor(status: IncendioMapa['status']): string {
+const statusLabels: Record<StatusIncendio, string> = {
+    ativo: 'ATIVO',
+    em_combate: 'EM COMBATE',
+    contido: 'CONTIDO',
+    resolvido: 'RESOLVIDO',
+};
+
+function getMarkerColor(status: StatusIncendio): string {
     switch (status) {
         case 'ativo':
             return '#ef4444';
+        case 'em_combate':
+            return '#f97316';
         case 'contido':
             return '#eab308';
         case 'resolvido':
@@ -25,7 +46,7 @@ function getMarkerColor(status: IncendioMapa['status']): string {
     }
 }
 
-function createFireIcon(color: string): L.DivIcon {
+function createFireIcon(color: string, opacity = 1): L.DivIcon {
     return L.divIcon({
         html: `<div style="
       width: 24px; height: 24px;
@@ -33,6 +54,7 @@ function createFireIcon(color: string): L.DivIcon {
       border-radius: 50%;
       border: 3px solid rgba(255,255,255,0.8);
       box-shadow: 0 0 12px ${color}88;
+      opacity: ${opacity};
       display: flex; align-items: center; justify-content: center;
     "><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9.1 12 1 12 1s8 8.1 8 13.5c0 5.4-4.4 8.5-8 8.5z"/></svg></div>`,
         className: '',
@@ -61,13 +83,16 @@ export function MapComponent({
     zoom = 11,
     className = '',
     onMapClick,
+    onMarkerClick,
     selectedPoint,
 }: MapComponentProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const selectedMarkerRef = useRef<L.Marker | null>(null);
     const onMapClickRef = useRef(onMapClick);
+    const onMarkerClickRef = useRef(onMarkerClick);
     onMapClickRef.current = onMapClick;
+    onMarkerClickRef.current = onMarkerClick;
 
     useEffect(() => {
         if (!mapRef.current || mapInstanceRef.current) {
@@ -109,25 +134,60 @@ export function MapComponent({
         ).addTo(map);
 
         incendios.forEach((inc) => {
+            const color = getMarkerColor(inc.status);
+            const opacity = inc.status === 'resolvido' ? 0.4 : 1;
             const marker = L.marker([inc.latitude, inc.longitude], {
-                icon: createFireIcon(getMarkerColor(inc.status)),
+                icon: createFireIcon(color, opacity),
             }).addTo(map);
 
-            marker.bindPopup(`
-        <div style="font-family: system-ui, sans-serif; min-width: 200px;">
-          <strong style="font-size: 14px;">${inc.area_nome}</strong>
-          <p style="margin: 4px 0; font-size: 12px; color: #666;">${inc.descricao}</p>
-          <div style="display: flex; gap: 8px; margin-top: 8px;">
-            <span style="background: ${getMarkerColor(inc.status)}22; color: ${getMarkerColor(inc.status)}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-              ${inc.status.toUpperCase()}
-            </span>
-            <span style="font-size: 11px; color: #888;">
-              ${inc.nivel_risco.toUpperCase()}
-            </span>
-          </div>
-        </div>
-      `);
+            const riskLabel = inc.nivel_risco.toUpperCase();
+            const btnHtml = onMarkerClickRef.current
+                ? `<button data-incendio-id="${inc.id}" type="button" style="
+                    margin-top: 8px; width: 100%; padding: 4px 8px;
+                    background: hsl(220, 90%, 56%); color: white;
+                    border: none; border-radius: 6px; font-size: 11px;
+                    font-weight: 600; cursor: pointer;
+                  ">Detalhes</button>`
+                : '';
+
+            const popup = L.popup().setContent(`
+                <div style="font-family: system-ui, sans-serif; min-width: 200px;">
+                  <strong style="font-size: 14px;">${inc.area_nome}</strong>
+                  ${inc.local_critico_nome ? `<p style="margin: 2px 0; font-size: 11px; color: #888;">📍 ${inc.local_critico_nome}</p>` : ''}
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <span style="background: ${color}22; color: ${color}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                      ${statusLabels[inc.status]}
+                    </span>
+                    <span style="font-size: 11px; color: #888;">
+                      ${riskLabel}
+                    </span>
+                  </div>
+                  ${inc.detectado_em ? `<p style="margin-top: 6px; font-size: 10px; color: #999;">Detectado: ${new Date(inc.detectado_em).toLocaleDateString('pt-BR')}</p>` : ''}
+                  ${btnHtml}
+                </div>
+            `);
+
+            marker.bindPopup(popup);
+
+            marker.on('popupopen', () => {
+                const btn = document.querySelector(
+                    `button[data-incendio-id="${inc.id}"]`,
+                );
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        onMarkerClickRef.current?.(inc.id);
+                        map.closePopup();
+                    });
+                }
+            });
         });
+
+        if (incendios.length > 0) {
+            const bounds = L.latLngBounds(
+                incendios.map((i) => [i.latitude, i.longitude]),
+            );
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        }
 
         const handler = (e: L.LeafletMouseEvent) => {
             onMapClickRef.current?.(e.latlng.lat, e.latlng.lng);
