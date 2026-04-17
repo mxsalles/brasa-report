@@ -45,8 +45,8 @@ O produto chama-se **Brasa**. Logo principal: `public/images/logo-brasa.png`. Te
 
 ### Rotas da aplicação
 
-**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API), mapa (incêndios reais via `MapaPageController` + condições climáticas via **OpenMeteo** no backend, mesmo serviço/cache que o dashboard).
-**Páginas ainda com mock:** alertas. **Administração** usa dados reais (Inertia + API para alterações).
+**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API), mapa (incêndios reais via `MapaPageController` + condições climáticas via **OpenMeteo** no backend, mesmo serviço/cache que o dashboard), **alertas** (lista inicial via `AlertasPageController` + `GET /api/alertas` com origem descritiva; polling global de novos incêndios com toasts **Sonner** no layout da app).
+**Administração** usa dados reais (Inertia + API para alterações).
 
 As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Mapa usa **Leaflet** com dados reais do banco.
 
@@ -353,6 +353,8 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | Testes da página brigadas         | `tests/Feature/BrigadasPageControllerTest.php`                                 | —                                                     |
 | MapaPageController (Inertia)      | `app/Http/Controllers/MapaPageController.php`                                  | Página Inertia com dados reais do mapa                 |
 | Testes da página mapa             | `tests/Feature/MapaPageControllerTest.php`                                     | —                                                     |
+| AlertasPageController (Inertia)   | `app/Http/Controllers/AlertasPageController.php`                               | Primeira página de alertas + UI via API (todos os papéis autenticados) |
+| Testes da página alertas          | `tests/Feature/AlertasPageControllerTest.php`                                  | —                                                     |
 | Migration em_combate              | `database/migrations/2026_04_16_222620_add_em_combate_to_status_incendio_enum.php` | Adiciona 'em_combate' ao enum PostgreSQL           |
 | Arquivos de idioma pt_BR          | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php`     | Validação, auth, senhas, paginação traduzidos          |
 | Teste de locale                   | `tests/Unit/AppLocaleTest.php`                                                 | Garante locale/fallback/faker = pt_BR                  |
@@ -532,7 +534,7 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 ### IncendioController
 
-- `GET   /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
+- `GET   /api/incendios` — auth:sanctum (user, brigadista, gestor, administrador) — listagem; filtro opcional `detectado_de` (data ISO 8601) para incêndios com `detectado_em` estritamente posterior (útil em polling)
 - `POST  /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
 - `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, administrador)
 - `GET   /api/incendios/{incendio}/historico` — auth:sanctum (brigadista, gestor, administrador) — linha do tempo (registro, logs, despachos, métricas)
@@ -556,6 +558,10 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 Props Inertia: `incendios` (ativos, em combate, contidos e resolvidos com área e local crítico), `condicoesClimaticas` — mesmo payload que o clima do dashboard (`temperatura_c`, `umidade_pct`, `atualizado_em` via **OpenMeteo**, cache de 15 minutos, coordenadas em `config/services.php` → `open_meteo`) ou `null` se a API falhar; `podeGerenciar` (boolean — gestor/administrador).
 Frontend: mapa Leaflet com marcadores coloridos por status, popup com detalhes, dialog com toggle Detalhes/Histórico (histórico via `GET /api/incendios/{incendio}/historico` quando aplicável), painel lateral de ocorrências, card de condições climáticas. Legenda inclui Ativo, Em Combate, Contido, Resolvido.
+
+### AlertasPageController (Inertia)
+
+- `GET /alertas` — web `auth`, `verified`, `nao-bloqueado` — lista inicial de alertas (primeira página) com `origem_label` e `origem_resumo`; filtros, paginação e marcação como entendido via `GET`/`PATCH` em `/api/alertas` (axios + Sanctum stateful). Toasts de novos incêndios: componente global no layout da app faz polling em `GET /api/incendios` com `detectado_de` (sem toast no primeiro ciclo).
 
 ### LeituraMeteorologicaController
 
@@ -591,12 +597,12 @@ Papéis: middleware `funcao` + `nao-bloqueado`.
 
 ### AlertaController
 
-- `GET   /api/alertas` — auth:sanctum (brigadista, gestor, administrador)
-- `GET   /api/alertas/{alerta}` — auth:sanctum (brigadista, gestor, administrador)
-- `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (brigadista, gestor, administrador)
+- `GET   /api/alertas` — auth:sanctum (user, brigadista, gestor, administrador)
+- `GET   /api/alertas/{alerta}` — auth:sanctum (user, brigadista, gestor, administrador)
+- `PATCH /api/alertas/{alerta}/entregue` — auth:sanctum (user, brigadista, gestor, administrador)
 
 Somente leitura + patch — criação via Observer/Job (pendente implementação).
-Tabela polimórfica sem FKs — origem_id e origem_tabela expostos diretamente.
+Tabela polimórfica sem FKs — origem_id e origem_tabela expostos diretamente; `AlertaResource` inclui `origem_label` (pt-BR) e `origem_resumo` quando a origem polimórfica é resolvível (eager `loadMorph` no index/show/marcarEntregue).
 marcarEntregue bloqueia se já entregue (422).
 Log de auditoria em marcarEntregue.
 Papéis: middleware `funcao` + `nao-bloqueado`.
