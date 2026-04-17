@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusIncendio;
 use App\Http\Requests\DespachoBrigada\FinalizarDespachoRequest;
 use App\Http\Requests\DespachoBrigada\RegistrarChegadaRequest;
 use App\Http\Requests\DespachoBrigada\StoreDespachoBrigadaRequest;
@@ -131,6 +132,23 @@ class DespachoBrigadaController extends Controller
             'entidade_id' => $despacho->id,
             'dados_json' => null,
         ]);
+
+        $incendio->refresh();
+
+        if ($incendio->status === StatusIncendio::Ativo) {
+            $incendio->update(['status' => StatusIncendio::EmCombate]);
+
+            LogAuditoria::query()->create([
+                'usuario_id' => $usuario->id,
+                'acao' => 'atualizacao_status_incendio',
+                'entidade_tipo' => 'incendios',
+                'entidade_id' => $incendio->id,
+                'dados_json' => [
+                    'status_anterior' => StatusIncendio::Ativo->value,
+                    'status_novo' => StatusIncendio::EmCombate->value,
+                ],
+            ]);
+        }
 
         $despacho->load('brigada');
 
