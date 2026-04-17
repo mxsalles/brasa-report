@@ -124,6 +124,57 @@ test('brigadas incluem usuarios_count', function () {
         ->and($item['usuarios_count'])->toBe(2);
 });
 
+test('brigada sem despacho aberto tem operacao_incendio nula', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $brigada = Brigada::factory()->create();
+
+    $response = $this->actingAs($usuario)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+    $item = collect($props['brigadas'])->firstWhere('id', $brigada->id);
+
+    expect($item['operacao_incendio'])->toBeNull();
+});
+
+test('brigada com despacho aberto sem chegada inclui operacao em_deslocamento', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $brigada = Brigada::factory()->create(['disponivel' => false]);
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    DespachoBrigada::factory()->create([
+        'brigada_id' => $brigada->id,
+        'incendio_id' => $incendio->id,
+        'chegada_em' => null,
+        'finalizado_em' => null,
+    ]);
+
+    $response = $this->actingAs($usuario)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+    $item = collect($props['brigadas'])->firstWhere('id', $brigada->id);
+
+    expect($item['operacao_incendio'])->not->toBeNull()
+        ->and($item['operacao_incendio']['fase'])->toBe('em_deslocamento')
+        ->and($item['operacao_incendio']['incendio_status'])->toBe('ativo');
+});
+
+test('brigada com despacho aberto e chegada inclui operacao em_combate', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $brigada = Brigada::factory()->create(['disponivel' => false]);
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::EmCombate]);
+    DespachoBrigada::factory()->create([
+        'brigada_id' => $brigada->id,
+        'incendio_id' => $incendio->id,
+        'chegada_em' => now(),
+        'finalizado_em' => null,
+    ]);
+
+    $response = $this->actingAs($usuario)->get(route('brigadas'));
+    $props = $response->original->getData()['page']['props'];
+    $item = collect($props['brigadas'])->firstWhere('id', $brigada->id);
+
+    expect($item['operacao_incendio'])->not->toBeNull()
+        ->and($item['operacao_incendio']['fase'])->toBe('em_combate')
+        ->and($item['operacao_incendio']['incendio_status'])->toBe('em_combate');
+});
+
 test('despachos ativos aparecem nas props', function () {
     $usuario = Usuario::factory()->verified()->create();
     DespachoBrigada::factory()->count(2)->create(['finalizado_em' => null]);
@@ -199,16 +250,17 @@ test('user nao recebe usuarios disponiveis', function () {
 test('gestor recebe incendios ativos e contidos nas props', function () {
     $gestor = Usuario::factory()->verified()->gestor()->create();
     Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    Incendio::factory()->create(['status' => StatusIncendio::EmCombate]);
     Incendio::factory()->create(['status' => StatusIncendio::Contido]);
     Incendio::factory()->create(['status' => StatusIncendio::Resolvido]);
 
     $response = $this->actingAs($gestor)->get(route('brigadas'));
     $props = $response->original->getData()['page']['props'];
 
-    expect($props['incendiosAtivos'])->toHaveCount(2);
+    expect($props['incendiosAtivos'])->toHaveCount(3);
 
     $statuses = collect($props['incendiosAtivos'])->pluck('status')->all();
-    expect($statuses)->each->toBeIn(['ativo', 'contido']);
+    expect($statuses)->each->toBeIn(['ativo', 'em_combate', 'contido']);
 });
 
 test('administrador recebe incendios ativos nas props', function () {

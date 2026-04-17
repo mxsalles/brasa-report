@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StatusIncendio;
 use App\Models\Brigada;
 use App\Models\DespachoBrigada;
 use App\Models\Incendio;
@@ -466,6 +467,68 @@ test('test_gestor_pode_registrar_chegada', function () {
         ['chegada_em' => '2024-06-01T09:30:00Z'],
         despachoBrigadaAuthHeaders($gestor)
     )->assertOk();
+});
+
+test('test_chegada_muda_incendio_ativo_para_em_combate', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/chegada',
+        ['chegada_em' => '2024-06-01T09:30:00Z'],
+        despachoBrigadaAuthHeaders($gestor)
+    )->assertOk();
+
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::EmCombate);
+});
+
+test('test_chegada_nao_muda_incendio_ja_em_combate', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::EmCombate]);
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/chegada',
+        ['chegada_em' => '2024-06-01T09:30:00Z'],
+        despachoBrigadaAuthHeaders($gestor)
+    )->assertOk();
+
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::EmCombate);
+});
+
+test('test_chegada_registra_log_de_status_incendio', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    $despacho = DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'despachado_em' => Carbon::parse('2024-06-01 08:00:00'),
+        'chegada_em' => null,
+    ]);
+
+    $this->patchJson(
+        '/api/incendios/'.$incendio->id.'/despachos/'.$despacho->id.'/chegada',
+        ['chegada_em' => '2024-06-01T09:30:00Z'],
+        despachoBrigadaAuthHeaders($gestor)
+    )->assertOk();
+
+    $log = LogAuditoria::query()
+        ->where('acao', 'atualizacao_status_incendio')
+        ->where('entidade_tipo', 'incendios')
+        ->where('entidade_id', $incendio->id)
+        ->first();
+
+    expect($log)->not->toBeNull()
+        ->and($log->dados_json['status_anterior'])->toBe('ativo')
+        ->and($log->dados_json['status_novo'])->toBe('em_combate');
 });
 
 test('test_gestor_pode_finalizar_despacho', function () {
