@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\AreaMonitorada;
+use App\Models\DeteccaoSatelite;
 use App\Models\Incendio;
 use App\Models\LeituraMeteorologica;
 use App\Models\Usuario;
@@ -38,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        if (! $this->app->runningUnitTests()) {
+        if (! app()->environment('testing') && ! $this->app->runningUnitTests()) {
             try {
                 if (Schema::hasTable('areas_monitoradas') && AreaMonitorada::query()->doesntExist()) {
                     Artisan::call('db:seed', [
@@ -70,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
             'usuarios' => Usuario::class,
             'incendios' => Incendio::class,
             'leituras_meteorologicas' => LeituraMeteorologica::class,
+            'deteccoes_satelite' => DeteccaoSatelite::class,
         ]);
 
         $this->configureDefaults();

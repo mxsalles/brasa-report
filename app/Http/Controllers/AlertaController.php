@@ -36,6 +36,8 @@ class AlertaController extends Controller
             ->orderByDesc('enviado_em')
             ->paginate(20);
 
+        $alertas->getCollection()->loadMorph('origem', Alerta::origemMorphWith());
+
         return AlertaResource::collection($alertas)->response();
     }
 
@@ -44,6 +46,8 @@ class AlertaController extends Controller
      */
     public function show(Alerta $alerta): AlertaResource
     {
+        $alerta->loadMorph('origem', Alerta::origemMorphWith());
+
         return new AlertaResource($alerta);
     }
 
@@ -73,6 +77,9 @@ class AlertaController extends Controller
             'dados_json' => null,
         ]);
 
-        return new AlertaResource($alerta->fresh());
+        $fresh = $alerta->fresh();
+        $fresh->loadMorph('origem', Alerta::origemMorphWith());
+
+        return new AlertaResource($fresh);
     }
 }

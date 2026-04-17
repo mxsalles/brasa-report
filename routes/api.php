@@ -76,10 +76,16 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
         Route::patch('/usuarios/{usuario}/bloqueio', [UsuarioController::class, 'alternarBloqueio']);
     });
 
+    Route::middleware('funcao:user|brigadista|gestor|administrador')->group(function (): void {
+        Route::get('/incendios', [IncendioController::class, 'index']);
+        Route::get('/alertas', [AlertaController::class, 'index']);
+        Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
+        Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
+    });
+
     Route::middleware('funcao:brigadista|gestor|administrador')->group(function (): void {
         Route::patch('/brigadas/{brigada}/localizacao', [BrigadaController::class, 'atualizarLocalizacao']);
 
-        Route::get('/incendios', [IncendioController::class, 'index']);
         Route::post('/incendios', [IncendioController::class, 'store']);
         Route::get('/incendios/{incendio}', [IncendioController::class, 'show']);
         Route::get('/incendios/{incendio}/historico', [IncendioController::class, 'historico']);
@@ -90,10 +96,6 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
 
         Route::get('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'index']);
         Route::get('/incendios/{incendio}/despachos/{despacho}', [DespachoBrigadaController::class, 'show']);
-
-        Route::get('/alertas', [AlertaController::class, 'index']);
-        Route::get('/alertas/{alerta}', [AlertaController::class, 'show']);
-        Route::patch('/alertas/{alerta}/entregue', [AlertaController::class, 'marcarEntregue']);
     });
 
     Route::middleware('funcao:gestor|administrador')->group(function (): void {

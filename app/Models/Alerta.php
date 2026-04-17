@@ -47,10 +47,24 @@ class Alerta extends Model
     }
 
     /**
-     * @return MorphTo<Incendio|LeituraMeteorologica, $this>
+     * @return MorphTo<Incendio|DeteccaoSatelite|LeituraMeteorologica, $this>
      */
     public function origem(): MorphTo
     {
         return $this->morphTo('origem', 'origem_tabela', 'origem_id');
+    }
+
+    /**
+     * Relações aninhadas para `loadMorph('origem', ...)`.
+     *
+     * @return array<class-string, list<string>>
+     */
+    public static function origemMorphWith(): array
+    {
+        return [
+            Incendio::class => ['area', 'localCritico'],
+            LeituraMeteorologica::class => ['incendio.area'],
+            DeteccaoSatelite::class => [],
+        ];
     }
 }

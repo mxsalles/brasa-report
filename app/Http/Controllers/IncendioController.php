@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\NivelRiscoIncendio;
 use App\Enums\StatusIncendio;
+use App\Enums\TipoAlerta;
 use App\Http\Requests\Incendio\AtualizarRiscoRequest;
 use App\Http\Requests\Incendio\AtualizarStatusRequest;
 use App\Http\Requests\Incendio\StoreIncendioRequest;
 use App\Http\Requests\Incendio\UpdateIncendioRequest;
 use App\Http\Resources\IncendioResource;
+use App\Models\Alerta;
 use App\Models\DespachoBrigada;
 use App\Models\Incendio;
 use App\Models\LogAuditoria;
@@ -53,6 +55,14 @@ class IncendioController extends Controller
             $query->whereDate('detectado_em', '<=', $ate);
         }
 
+        if ($request->filled('detectado_de')) {
+            $request->validate([
+                'detectado_de' => ['required', 'date'],
+            ]);
+            $detectadoDe = Carbon::parse($request->string('detectado_de')->value());
+            $query->where('detectado_em', '>', $detectadoDe);
+        }
+
         $incendios = $query
             ->orderByDesc('detectado_em')
             ->paginate(20);
@@ -93,6 +103,15 @@ class IncendioController extends Controller
         ]);
 
         $incendio->load(['area', 'localCritico', 'deteccaoSatelite', 'usuario']);
+
+        $areaNome = $incendio->area?->nome ?? 'Área não informada';
+        Alerta::query()->create([
+            'tipo' => TipoAlerta::FogoDetectado,
+            'mensagem' => "Novo incêndio registrado em {$areaNome}",
+            'origem_id' => $incendio->id,
+            'origem_tabela' => 'incendios',
+            'entregue' => false,
+        ]);
 
         return (new IncendioResource($incendio))
             ->response()
