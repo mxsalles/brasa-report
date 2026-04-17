@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { AuthLayoutProps } from '@/types';
 
-const LOGO_SRC = '/images/logo-caninde.png';
+const LOGO_SRC = '/images/logo-brasa.png';
 
 export default function AuthSimpleLayout({
     children,
@@ -11,23 +11,23 @@ export default function AuthSimpleLayout({
     return (
         <div
             className={cn(
-                'auth-caninde flex min-h-svh flex-col items-center justify-center p-6 md:p-10',
+                'auth-brasa flex min-h-svh flex-col items-center justify-center p-6 md:p-10',
             )}
             style={{
-                backgroundColor: 'var(--caninde-auth-canvas)',
+                backgroundColor: 'var(--brasa-auth-canvas)',
             }}
         >
             <div
                 className={cn(
                     'w-full max-w-md rounded-xl border border-neutral-200/80 shadow-md shadow-neutral-900/5',
                 )}
-                style={{ backgroundColor: 'var(--caninde-auth-card)' }}
+                style={{ backgroundColor: 'var(--brasa-auth-card)' }}
             >
                 <div className="flex flex-col gap-8 px-8 py-10 md:px-10 md:py-10">
                     <div className="flex flex-col items-center gap-5 text-center">
                         <img
                             src={LOGO_SRC}
-                            alt="Canindé"
+                            alt="Brasa"
                             className="size-20 object-contain"
                             width={80}
                             height={80}
@@ -35,7 +35,7 @@ export default function AuthSimpleLayout({
                         <div className="space-y-2">
                             <h1
                                 className="text-xl font-semibold tracking-tight"
-                                style={{ color: 'var(--caninde-auth-heading)' }}
+                                style={{ color: 'var(--brasa-auth-heading)' }}
                             >
                                 {title}
                             </h1>

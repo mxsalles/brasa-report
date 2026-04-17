@@ -153,7 +153,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u1',
         nome: 'Carlos Silva',
-        email: 'carlos@caninde.ms',
+        email: 'carlos@brasa.ms',
         funcao: 'administrador',
         brigada_nome: null,
         bloqueado: false,
@@ -162,7 +162,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u2',
         nome: 'Ana Martins',
-        email: 'ana@caninde.ms',
+        email: 'ana@brasa.ms',
         funcao: 'gestor',
         brigada_nome: null,
         bloqueado: false,
@@ -171,7 +171,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u3',
         nome: 'João Pereira',
-        email: 'joao@caninde.ms',
+        email: 'joao@brasa.ms',
         funcao: 'brigadista',
         brigada_nome: 'Brigada Alpha',
         bloqueado: false,
@@ -180,7 +180,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u4',
         nome: 'Maria Souza',
-        email: 'maria@caninde.ms',
+        email: 'maria@brasa.ms',
         funcao: 'brigadista',
         brigada_nome: 'Brigada Bravo',
         bloqueado: false,
@@ -189,7 +189,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u5',
         nome: 'Pedro Lima',
-        email: 'pedro@caninde.ms',
+        email: 'pedro@brasa.ms',
         funcao: 'brigadista',
         brigada_nome: 'Brigada Charlie',
         bloqueado: true,
@@ -198,7 +198,7 @@ export const mockUsuariosAdmin: UsuarioAdminResumo[] = [
     {
         id: 'u6',
         nome: 'Fernanda Costa',
-        email: 'fernanda@caninde.ms',
+        email: 'fernanda@brasa.ms',
         funcao: 'gestor',
         brigada_nome: null,
         bloqueado: false,

@@ -71,17 +71,17 @@
 }
 
 /**
- * Escopo das telas de autenticação Canindé (protótipo: azul primário, âmbar accent).
+ * Escopo das telas de autenticação Brasa (primário laranja-vermelho, acento âmbar).
  */
-.auth-caninde {
+.auth-brasa {
     color-scheme: light;
 
-    --caninde-auth-primary: hsl(210 80% 45%);
-    --caninde-auth-canvas: hsl(0 0% 98%);
-    --caninde-auth-card: #ffffff;
-    --caninde-auth-heading: hsl(220 20% 15%);
-    --caninde-auth-link: hsl(210 80% 45%);
-    --caninde-auth-accent: hsl(36 90% 50%);
+    --brasa-auth-primary: hsl(18 90% 46%);
+    --brasa-auth-canvas: hsl(0 0% 98%);
+    --brasa-auth-card: #ffffff;
+    --brasa-auth-heading: hsl(220 20% 15%);
+    --brasa-auth-link: hsl(18 90% 46%);
+    --brasa-auth-accent: hsl(32 95% 52%);
 
     --background: hsl(0 0% 98%);
     --foreground: hsl(220 20% 15%);
@@ -90,7 +90,7 @@
     --popover: #ffffff;
     --popover-foreground: hsl(220 20% 15%);
 
-    --primary: hsl(210 80% 45%);
+    --primary: hsl(18 90% 46%);
     --primary-foreground: #ffffff;
 
     --secondary: hsl(220 14% 94%);
@@ -99,52 +99,52 @@
     --muted: hsl(220 14% 92%);
     --muted-foreground: hsl(220 10% 46%);
 
-    --accent: hsl(36 90% 50%);
-    --accent-foreground: #ffffff;
+    --accent: hsl(32 95% 52%);
+    --accent-foreground: hsl(28 30% 12%);
 
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: #ffffff;
 
     --border: hsl(220 13% 88%);
     --input: hsl(220 13% 88%);
-    --ring: hsl(210 80% 45%);
+    --ring: hsl(18 90% 46%);
 }
 
 :root {
-    /* Tema alinhado ao protótipo Canindé (dashboard / shell) */
+    /* Tema Brasa — dashboard / shell (primário laranja-vermelho) */
     --background: hsl(0 0% 98%);
     --foreground: hsl(220 20% 15%);
     --card: hsl(0 0% 100%);
     --card-foreground: hsl(220 20% 15%);
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(220 20% 15%);
-    --primary: hsl(210 80% 45%);
+    --primary: hsl(18 90% 46%);
     --primary-foreground: hsl(0 0% 100%);
     --secondary: hsl(220 14% 94%);
     --secondary-foreground: hsl(220 15% 30%);
     --muted: hsl(220 14% 92%);
     --muted-foreground: hsl(220 10% 46%);
-    --accent: hsl(36 90% 50%);
-    --accent-foreground: hsl(0 0% 100%);
+    --accent: hsl(32 95% 52%);
+    --accent-foreground: hsl(28 30% 12%);
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: hsl(220 13% 88%);
     --input: hsl(220 13% 88%);
-    --ring: hsl(210 80% 45%);
+    --ring: hsl(18 90% 46%);
     --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-2: oklch(0.62 0.18 45);
+    --chart-3: oklch(0.55 0.16 28);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
     --sidebar: hsl(0 0% 100%);
     --sidebar-foreground: hsl(220 15% 30%);
-    --sidebar-primary: hsl(210 80% 45%);
+    --sidebar-primary: hsl(18 90% 46%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(220 14% 96%);
     --sidebar-accent-foreground: hsl(220 15% 30%);
     --sidebar-border: hsl(220 13% 90%);
-    --sidebar-ring: hsl(210 80% 45%);
+    --sidebar-ring: hsl(18 90% 46%);
 
     --critical: oklch(0.55 0.22 25);
     --critical-foreground: oklch(0.985 0 0);
@@ -172,7 +172,7 @@
     }
 
     .glow-amber {
-        box-shadow: 0 0 12px hsl(210 80% 45% / 0.12);
+        box-shadow: 0 0 12px hsl(18 90% 46% / 0.18);
     }
 
     .glow-red {
@@ -182,18 +182,18 @@
     .text-gradient-fire {
         background-image: linear-gradient(
             135deg,
-            hsl(210 80% 45%) 0%,
-            hsl(160 60% 40%) 100%
+            hsl(22 95% 50%) 0%,
+            hsl(8 78% 42%) 100%
         );
         background-clip: text;
         color: transparent;
     }
 
     .status-pulse {
-        animation: caninde-pulse-glow 2s ease-in-out infinite;
+        animation: brasa-pulse-glow 2s ease-in-out infinite;
     }
 
-    @keyframes caninde-pulse-glow {
+    @keyframes brasa-pulse-glow {
         0%,
         100% {
             opacity: 1;

@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 import { ensureSanctumCsrfCookie } from './lib/axios-setup';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Canindé';
+const appName = import.meta.env.VITE_APP_NAME || 'Brasa';
 
 function ensureLightDocument(): void {
     document.documentElement.classList.remove('dark');

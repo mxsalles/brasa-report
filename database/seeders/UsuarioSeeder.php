@@ -17,7 +17,7 @@ class UsuarioSeeder extends Seeder
         $senhaHash = Hash::make('password');
 
         Usuario::updateOrCreate(
-            ['email' => 'user@caninde.dev'],
+            ['email' => 'user@brasa.dev'],
             [
                 'nome' => 'Usuário Teste',
                 'cpf' => '44444444444',
@@ -29,7 +29,7 @@ class UsuarioSeeder extends Seeder
         );
 
         Usuario::updateOrCreate(
-            ['email' => 'brigadista@caninde.dev'],
+            ['email' => 'brigadista@brasa.dev'],
             [
                 'nome' => 'Brigadista Teste',
                 'cpf' => '11111111111',
@@ -41,7 +41,7 @@ class UsuarioSeeder extends Seeder
         );
 
         Usuario::updateOrCreate(
-            ['email' => 'gestor@caninde.dev'],
+            ['email' => 'gestor@brasa.dev'],
             [
                 'nome' => 'Gestor Teste',
                 'cpf' => '22222222222',
@@ -53,7 +53,7 @@ class UsuarioSeeder extends Seeder
         );
 
         Usuario::updateOrCreate(
-            ['email' => 'admin@caninde.dev'],
+            ['email' => 'admin@brasa.dev'],
             [
                 'nome' => 'Admin Teste',
                 'cpf' => '33333333333',

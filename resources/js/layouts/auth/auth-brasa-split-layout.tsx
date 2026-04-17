@@ -3,19 +3,19 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const LOGO_SRC = '/images/logo-caninde.png';
+const LOGO_SRC = '/images/logo-brasa.png';
 
-type AuthCanindeSplitLayoutProps = {
+type AuthBrasaSplitLayoutProps = {
     children: ReactNode;
 };
 
-export default function AuthCanindeSplitLayout({
+export default function AuthBrasaSplitLayout({
     children,
-}: AuthCanindeSplitLayoutProps) {
+}: AuthBrasaSplitLayoutProps) {
     return (
         <div
             className={cn(
-                'auth-caninde flex min-h-svh flex-col bg-background lg:flex-row',
+                'auth-brasa flex min-h-svh flex-col bg-background lg:flex-row',
             )}
         >
             <div className="relative hidden overflow-hidden lg:flex lg:w-1/2 lg:items-center lg:justify-center">
@@ -32,13 +32,13 @@ export default function AuthCanindeSplitLayout({
                 >
                     <img
                         src={LOGO_SRC}
-                        alt="Canindé"
+                        alt="Brasa"
                         className="mx-auto mb-8 size-32 object-contain"
                         width={128}
                         height={128}
                     />
                     <h1 className="mb-3 text-4xl font-bold">
-                        <span className="text-gradient-fire">Canindé</span>
+                        <span className="text-gradient-fire">Brasa</span>
                     </h1>
                     <p className="mb-2 text-lg text-muted-foreground">
                         Pantanal — Serra do Amolar
@@ -60,14 +60,14 @@ export default function AuthCanindeSplitLayout({
                 >
                     <img
                         src={LOGO_SRC}
-                        alt="Canindé"
+                        alt="Brasa"
                         className="size-14 object-contain"
                         width={56}
                         height={56}
                     />
                     <div className="text-left">
                         <h1 className="text-xl font-bold">
-                            <span className="text-gradient-fire">Canindé</span>
+                            <span className="text-gradient-fire">Brasa</span>
                         </h1>
                         <p className="text-xs text-muted-foreground">
                             Pantanal

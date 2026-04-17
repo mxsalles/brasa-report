@@ -1,7 +1,7 @@
 services:
   mailpit:
     image: axllent/mailpit:latest
-    container_name: caninde_mailpit
+    container_name: brasa_mailpit
     restart: unless-stopped
     ports:
       - '1025:1025' # SMTP — usado pelo Laravel

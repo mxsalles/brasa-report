@@ -11,7 +11,7 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Canindé') }}</title>
+        <title inertia>{{ config('app.name', 'Brasa') }}</title>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">

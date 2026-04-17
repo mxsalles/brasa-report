@@ -1,4 +1,4 @@
-# Canindé — Documentação de Contexto
+# Brasa — Documentação de Contexto
 
 > Leia este arquivo antes de qualquer chat novo relacionado ao projeto.
 > Ele consolida decisões de arquitetura, stack, schema, convenções e regras de agente.
@@ -6,7 +6,7 @@
 
 ---
 
-## O que é o Canindé
+## O que é o Brasa
 
 Sistema de gestão e inteligência preditiva de incêndios florestais no **Pantanal brasileiro**. Desenvolvido por seis estudantes com impacto extensionista real — apoia brigadas de combate ao fogo, gestores ambientais e comunidades em áreas de risco.
 
@@ -14,16 +14,16 @@ Sistema de gestão e inteligência preditiva de incêndios florestais no **Panta
 
 ---
 
-## Dívida técnica — branding e legado BRASA
+## Branding
 
-Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada ao protótipo em `caninde`, incluindo logo em `public/images/logo-caninde.png` e paleta azul/âmbar do protótipo).
+O produto chama-se **Brasa**. Logo principal: `public/images/logo-brasa.png`. Tema da UI: primário laranja-vermelho e acentos âmbar (ver `resources/css/app.css`).
 
 | Área                        | Situação                                                                                                                       |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Utilizador / APP_NAME**   | Usar **Canindé** em e-mails, ecrãs e variável `APP_NAME` em novos ambientes (ver `.env.example`).                              |
+| **Utilizador / APP_NAME**   | Usar **Brasa** em e-mails, ecrãs e variável `APP_NAME` em novos ambientes (ver `.env.example`).                               |
 | **Este ficheiro**           | Mantém o nome histórico `brasa.md` para não quebrar referências em regras de agente e fluxos existentes.                       |
 | **Schema e artefactos SQL** | Ficheiros como `brasa_schema_postgres.sql` e prompts `prompt_*_brasa.md` conservam o prefixo **brasa** até migração explícita. |
-| **Código / tokens**         | Novos tokens Sanctum usam o nome `caninde`; tokens ou strings antigas com `brasa` podem coexistir até serem revistos.          |
+| **Código / tokens**         | Novos tokens Sanctum usam o nome `brasa`.                                                                                     |
 
 ---
 
@@ -43,7 +43,7 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 ## Frontend (Inertia)
 
-### Rotas alinhadas ao protótipo Canindé
+### Rotas da aplicação
 
 **Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API), mapa (incêndios reais via `MapaPageController` + condições climáticas via **OpenMeteo** no backend, mesmo serviço/cache que o dashboard).
 **Páginas ainda com mock:** alertas. **Administração** usa dados reais (Inertia + API para alterações).
@@ -65,7 +65,7 @@ Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful
 - **Campos customizados:** `senha_hash` (não `password`), `nome` (não `name`), `cpf` adicional
 - **Política de senha (produção):** em `APP_ENV=production`, `Password::defaults()` em `app/Providers/AppServiceProvider.php` (`configureDefaults`) exige apenas **mínimo de 8 caracteres** — sem obrigatoriedade de maiúsculas/minúsculas mistas, números, símbolos nem verificação de senhas vazadas (`uncompromised`). Fora de produção, o callback devolve `null` e o Laravel usa o padrão do framework. Regras de nova senha e confirmação continuam centralizadas na trait `PasswordValidationRules` com `Password::default()`.
 - **Utilizadores de teste (não produção):** `UsuarioTesteSeeder` garante três contas para desenvolvimento (todos com senha `12345678` em texto plano no seeder, persistida com `Hash::make`): brigadista `teste@gmail.com` (CPF `12345678954`, nome «Teste»); gestor `gestor@gmail.com`; administrador `admin@gmail.com`. Semeado no arranque da aplicação por `AppServiceProvider` quando a tabela `usuarios` existe e o email ainda não existe (mesmo padrão do `AreaMonitoradaSeeder`); também invocado por `DatabaseSeeder`. O seeder não executa em `APP_ENV=production`.
-- **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `caninde.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
+- **SPA + `/api` (Inertia + axios):** `config/sanctum.php` usa `guard` `web` e uma lista **stateful** que junta `SANCTUM_STATEFUL_DOMAINS` a defaults (localhost, `APP_URL`, etc.); para domínios Valet/Herd personalizados (ex.: `brasa.test`), inclua o host na env ou confirme que corresponde ao `APP_URL`. O cliente chama `GET /sanctum/csrf-cookie` no arranque (`resources/js/app.tsx`). Pedidos `axios` a `/api` enviam `Referer` quando o browser omite, para o middleware Sanctum reconhecer pedidos «do frontend».
 
 ---
 
@@ -79,7 +79,7 @@ O aplicativo é 100 % pt-BR. Todas as strings visíveis ao usuário — validaç
 | **Arquivos de idioma**    | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php` — publicados via `php artisan lang:publish` e traduzidos.    |
 | **Atributos de validação** | Mapeados em `lang/pt_BR/validation.php` → `attributes` (nome, e-mail, senha, senha atual, confirmação da senha, código, token).        |
 | **Frontend (React)**      | Strings hardcoded em pt-BR em todos os componentes, páginas, layouts, hooks e UI base (sidebar, dialog, sheet, spinner, breadcrumb).     |
-| **Blade**                 | `app.blade.php` com fallback `Canindé` no `<title>`; `<html lang="pt-BR">` via `app()->getLocale()`.                                   |
+| **Blade**                 | `app.blade.php` com fallback `Brasa` no `<title>`; `<html lang="pt-BR">` via `app()->getLocale()`.                                   |
 
 **Regra:** nenhuma string em inglês visível ao usuário final. Novos componentes devem seguir a mesma convenção.
 

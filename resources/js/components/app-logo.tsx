@@ -1,4 +1,4 @@
-const LOGO_SRC = '/images/logo-caninde.png';
+const LOGO_SRC = '/images/logo-brasa.png';
 
 export default function AppLogo() {
     return (
@@ -12,7 +12,7 @@ export default function AppLogo() {
             />
             <div className="ml-1 grid flex-1 text-left text-sm">
                 <span className="mb-0.5 truncate leading-tight font-semibold tracking-wide">
-                    CANINDÉ
+                    Brasa
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
                     Pantanal

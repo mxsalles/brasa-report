@@ -10,8 +10,8 @@ test('usuario seeder is idempotent and creates four development users', function
 
     expect(Usuario::query()->count())->toBe(4);
 
-    expect(Usuario::query()->where('email', 'user@caninde.dev')->exists())->toBeTrue();
-    expect(Usuario::query()->where('email', 'brigadista@caninde.dev')->exists())->toBeTrue();
-    expect(Usuario::query()->where('email', 'gestor@caninde.dev')->exists())->toBeTrue();
-    expect(Usuario::query()->where('email', 'admin@caninde.dev')->exists())->toBeTrue();
+    expect(Usuario::query()->where('email', 'user@brasa.dev')->exists())->toBeTrue();
+    expect(Usuario::query()->where('email', 'brigadista@brasa.dev')->exists())->toBeTrue();
+    expect(Usuario::query()->where('email', 'gestor@brasa.dev')->exists())->toBeTrue();
+    expect(Usuario::query()->where('email', 'admin@brasa.dev')->exists())->toBeTrue();
 });

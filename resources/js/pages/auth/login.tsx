@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import AuthCanindeSplitLayout from '@/layouts/auth/auth-caninde-split-layout';
+import AuthBrasaSplitLayout from '@/layouts/auth/auth-brasa-split-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
@@ -27,7 +27,7 @@ export default function Login({
     const [mostrarSenha, setMostrarSenha] = useState(false);
 
     return (
-        <AuthCanindeSplitLayout>
+        <AuthBrasaSplitLayout>
             <Head title="Entrar" />
 
             <div className="glass-panel rounded-2xl p-8">
@@ -155,6 +155,6 @@ export default function Login({
                     </div>
                 ) : null}
             </div>
-        </AuthCanindeSplitLayout>
+        </AuthBrasaSplitLayout>
     );
 }

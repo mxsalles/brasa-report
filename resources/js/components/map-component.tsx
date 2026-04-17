@@ -46,7 +46,7 @@ function getMarkerColor(status: StatusIncendio): string {
     }
 }
 
-function createFireIcon(color: string, opacity = 1): L.DivIcon {
+function createFireIcon(color: string): L.DivIcon {
     return L.divIcon({
         html: `<div style="
       width: 24px; height: 24px;
@@ -54,7 +54,6 @@ function createFireIcon(color: string, opacity = 1): L.DivIcon {
       border-radius: 50%;
       border: 3px solid rgba(255,255,255,0.8);
       box-shadow: 0 0 12px ${color}88;
-      opacity: ${opacity};
       display: flex; align-items: center; justify-content: center;
     "><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9.1 12 1 12 1s8 8.1 8 13.5c0 5.4-4.4 8.5-8 8.5z"/></svg></div>`,
         className: '',
@@ -135,16 +134,15 @@ export function MapComponent({
 
         incendios.forEach((inc) => {
             const color = getMarkerColor(inc.status);
-            const opacity = inc.status === 'resolvido' ? 0.4 : 1;
             const marker = L.marker([inc.latitude, inc.longitude], {
-                icon: createFireIcon(color, opacity),
+                icon: createFireIcon(color),
             }).addTo(map);
 
             const riskLabel = inc.nivel_risco.toUpperCase();
             const btnHtml = onMarkerClickRef.current
                 ? `<button data-incendio-id="${inc.id}" type="button" style="
                     margin-top: 8px; width: 100%; padding: 4px 8px;
-                    background: hsl(220, 90%, 56%); color: white;
+                    background: hsl(18, 88%, 46%); color: white;
                     border: none; border-radius: 6px; font-size: 11px;
                     font-weight: 600; cursor: pointer;
                   ">Detalhes</button>`

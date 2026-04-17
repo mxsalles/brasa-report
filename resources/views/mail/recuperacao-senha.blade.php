@@ -7,9 +7,9 @@
 </head>
 <body>
     <p>Olá, {{ $usuario->nome }},</p>
-    <p>Você solicitou a recuperação de senha no sistema Canindé. Use o token abaixo no aplicativo ou site, no fluxo de redefinição de senha:</p>
+    <p>Você solicitou a recuperação de senha no sistema Brasa. Use o token abaixo no aplicativo ou site, no fluxo de redefinição de senha:</p>
     <p><strong>Token:</strong> {{ $tokenPlano }}</p>
     <p>Este token expira em 30 minutos. Se você não fez esta solicitação, ignore este email.</p>
-    <p>— Equipe Canindé</p>
+    <p>— Equipe Brasa</p>
 </body>
 </html>
