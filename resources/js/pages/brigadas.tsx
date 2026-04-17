@@ -20,6 +20,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,7 +34,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { StatusBadge } from '@/components/status-badge';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import axios from '@/lib/axios-setup';
 import { cn } from '@/lib/utils';
@@ -1191,35 +1196,102 @@ export default function Brigadas() {
                                             </p>
                                         ) : (
                                             candidateMembros.map((u) => (
-                                                <label
-                                                    key={u.id}
-                                                    className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-secondary/60"
-                                                >
-                                                    <Checkbox
-                                                        checked={selectedMemberIds.has(
+                                                (() => {
+                                                    const isCurrentlySelected =
+                                                        selectedMemberIds.has(
                                                             u.id,
-                                                        )}
-                                                        onCheckedChange={() =>
-                                                            toggleMember(u.id)
-                                                        }
-                                                    />
-                                                    <span className="flex-1 truncate text-sm">
-                                                        {u.nome}
-                                                    </span>
-                                                    <span
-                                                        className={cn(
-                                                            'shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium',
-                                                            funcaoBadge[
-                                                                u.funcao
-                                                            ] ??
-                                                                'border-border text-muted-foreground',
-                                                        )}
-                                                    >
-                                                        {funcaoLabel[
-                                                            u.funcao
-                                                        ] ?? u.funcao}
-                                                    </span>
-                                                </label>
+                                                        );
+                                                    const isAddBlocked =
+                                                        !isCurrentlySelected &&
+                                                        u.funcao !==
+                                                            'brigadista';
+                                                    const tooltipText =
+                                                        isAddBlocked &&
+                                                        (u.funcao === 'user'
+                                                            ? 'usuario precisa ser um brigadista para fazer parte da brigada'
+                                                            : 'Gestores não podem adicionar administradores ou gestores na brigada');
+
+                                                    const row = (
+                                                        <label
+                                                            key={u.id}
+                                                            aria-disabled={
+                                                                isAddBlocked
+                                                            }
+                                                            className={cn(
+                                                                'flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors',
+                                                                isAddBlocked
+                                                                    ? 'cursor-not-allowed opacity-60'
+                                                                    : 'cursor-pointer hover:bg-secondary/60',
+                                                            )}
+                                                            onClick={(e) => {
+                                                                if (
+                                                                    isAddBlocked
+                                                                ) {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (
+                                                                    isAddBlocked
+                                                                ) {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Checkbox
+                                                                checked={isCurrentlySelected}
+                                                                disabled={
+                                                                    isAddBlocked
+                                                                }
+                                                                onCheckedChange={() => {
+                                                                    if (
+                                                                        isAddBlocked
+                                                                    ) {
+                                                                        return;
+                                                                    }
+                                                                    toggleMember(
+                                                                        u.id,
+                                                                    );
+                                                                }}
+                                                            />
+                                                            <span className="flex-1 truncate text-sm">
+                                                                {u.nome}
+                                                            </span>
+                                                            <span
+                                                                className={cn(
+                                                                    'shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium',
+                                                                    funcaoBadge[
+                                                                        u.funcao
+                                                                    ] ??
+                                                                        'border-border text-muted-foreground',
+                                                                )}
+                                                            >
+                                                                {funcaoLabel[
+                                                                    u.funcao
+                                                                ] ?? u.funcao}
+                                                            </span>
+                                                        </label>
+                                                    );
+
+                                                    if (!isAddBlocked) {
+                                                        return row;
+                                                    }
+
+                                                    return (
+                                                        <Tooltip key={u.id}>
+                                                            <TooltipTrigger
+                                                                asChild
+                                                            >
+                                                                {row}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {tooltipText}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    );
+                                                })()
                                             ))
                                         )}
                                     </div>
