@@ -135,7 +135,7 @@ test('test_remove_brigada_sem_membros', function () {
     $this->deleteJson('/api/brigadas/'.$brigada->id, [], brigadaAuthHeaders())
         ->assertNoContent();
 
-    $this->assertDatabaseMissing('brigadas', ['id' => $brigada->id]);
+    $this->assertSoftDeleted('brigadas', ['id' => $brigada->id]);
 });
 
 test('test_retorna_409_ao_remover_brigada_com_membros', function () {
@@ -246,7 +246,7 @@ test('gestor pode remover brigada sem membros', function () {
     $this->deleteJson('/api/brigadas/'.$brigada->id, [], brigadaAuthHeaders($usuario))
         ->assertNoContent();
 
-    $this->assertDatabaseMissing('brigadas', ['id' => $brigada->id]);
+    $this->assertSoftDeleted('brigadas', ['id' => $brigada->id]);
 });
 
 test('user nao pode criar brigada', function () {

@@ -247,7 +247,7 @@ test('test_remove_usuario_sem_incendios', function () {
     $this->deleteJson('/api/usuarios/'.$usuario->id, [], usuarioAuthHeaders())
         ->assertNoContent();
 
-    $this->assertDatabaseMissing('usuarios', ['id' => $usuario->id]);
+    $this->assertSoftDeleted('usuarios', ['id' => $usuario->id]);
 });
 
 test('test_retorna_403_ao_remover_proprio_usuario', function () {
