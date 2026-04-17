@@ -29,6 +29,68 @@ export interface AlertaDetalhe {
     lido: boolean;
 }
 
+export type OrigemTabelaAlerta =
+    | 'incendios'
+    | 'leituras_meteorologicas'
+    | 'deteccoes_satelite'
+    | string;
+
+export type OrigemResumoAlerta =
+    | {
+          tipo: 'incendio';
+          incendio_id: string;
+          area_nome: string | null;
+          detectado_em: string | null;
+          status: string;
+          local_critico_nome: string | null;
+      }
+    | {
+          tipo: 'leitura_meteorologica';
+          leitura_id: string;
+          incendio_id: string;
+          area_nome: string | null;
+          temperatura: string;
+          umidade: string;
+          registrado_em: string | null;
+      }
+    | {
+          tipo: 'deteccao_satelite';
+          deteccao_id: string;
+          fonte: string | null;
+          latitude: string;
+          longitude: string;
+          confianca: string;
+          detectado_em: string | null;
+      };
+
+export interface AlertaApiItem {
+    id: string;
+    tipo: TipoAlerta;
+    mensagem: string;
+    origem_id: string;
+    origem_tabela: OrigemTabelaAlerta;
+    origem_label: string;
+    origem_resumo?: OrigemResumoAlerta | null;
+    enviado_em: string;
+    entregue: boolean;
+}
+
+export interface PaginatedAlertas {
+    data: AlertaApiItem[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+}
+
 export type StatusBrigada = 'disponivel' | 'em_campo' | 'indisponivel';
 
 export interface BrigadaResumo {
