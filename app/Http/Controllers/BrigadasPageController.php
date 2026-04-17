@@ -17,11 +17,35 @@ class BrigadasPageController extends Controller
 {
     public function index(Request $request): Response
     {
+        $despachosAbertosPorBrigada = DespachoBrigada::query()
+            ->whereNull('finalizado_em')
+            ->with(['incendio.area'])
+            ->get()
+            ->groupBy('brigada_id')
+            ->map(fn ($group) => $group->sortByDesc('despachado_em')->first());
+
         $brigadas = Brigada::query()
             ->withCount('usuarios')
             ->orderBy('nome')
             ->get()
-            ->map(fn (Brigada $brigada): array => (new BrigadaResource($brigada))->resolve());
+            ->map(function (Brigada $brigada) use ($despachosAbertosPorBrigada): array {
+                $data = (new BrigadaResource($brigada))->resolve();
+
+                /** @var DespachoBrigada|null $despacho */
+                $despacho = $despachosAbertosPorBrigada->get($brigada->id);
+
+                if ($despacho !== null) {
+                    $data['operacao_incendio'] = [
+                        'fase' => $despacho->chegada_em === null ? 'em_deslocamento' : 'em_combate',
+                        'incendio_status' => $despacho->incendio->status->value,
+                        'area_nome' => $despacho->incendio->area?->nome ?? '—',
+                    ];
+                } else {
+                    $data['operacao_incendio'] = null;
+                }
+
+                return $data;
+            });
 
         $mapDespacho = fn (DespachoBrigada $d): array => [
             'id' => $d->id,
@@ -73,7 +97,7 @@ class BrigadasPageController extends Controller
         $incendiosAtivos = $podeGerenciar
             ? Incendio::query()
                 ->with('area')
-                ->whereIn('status', [StatusIncendio::Ativo, StatusIncendio::Contido])
+                ->whereIn('status', [StatusIncendio::Ativo, StatusIncendio::EmCombate, StatusIncendio::Contido])
                 ->latest('detectado_em')
                 ->get()
                 ->map(fn (Incendio $i): array => [
