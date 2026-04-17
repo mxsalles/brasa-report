@@ -62,6 +62,30 @@ test('test_index_requer_autenticacao', function () {
     $this->getJson('/api/alertas')->assertUnauthorized();
 });
 
+test('usuario_com_funcao_user_pode_listar_alertas', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    Alerta::factory()->create();
+
+    $response = $this->getJson('/api/alertas', alertaAuthHeaders($usuario));
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.origem_label', fn ($v) => is_string($v) && $v !== '');
+});
+
+test('usuario_com_funcao_user_pode_marcar_alerta_entregue', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $alerta = Alerta::factory()->create(['entregue' => false]);
+
+    $response = $this->patchJson(
+        '/api/alertas/'.$alerta->id.'/entregue',
+        [],
+        alertaAuthHeaders($usuario),
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('data.entregue', true);
+});
+
 test('test_retorna_alerta', function () {
     $alerta = Alerta::factory()->create([
         'tipo' => TipoAlerta::TemperaturaAlta,
@@ -78,6 +102,7 @@ test('test_retorna_alerta', function () {
         ->assertJsonPath('data.mensagem', 'Alerta de teste')
         ->assertJsonPath('data.origem_id', $alerta->origem_id)
         ->assertJsonPath('data.origem_tabela', 'incendios')
+        ->assertJsonPath('data.origem_label', 'Ocorrência de incêndio')
         ->assertJsonPath('data.entregue', false);
 });
 

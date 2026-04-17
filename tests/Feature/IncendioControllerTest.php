@@ -2,6 +2,7 @@
 
 use App\Enums\NivelRiscoIncendio;
 use App\Enums\StatusIncendio;
+use App\Models\Alerta;
 use App\Models\AreaMonitorada;
 use App\Models\DespachoBrigada;
 use App\Models\Incendio;
@@ -119,6 +120,8 @@ test('test_registra_incendio_com_dados_validos', function () {
         ->assertJsonPath('data.latitude', '-16.5000000')
         ->assertJsonPath('data.nivel_risco', 'medio')
         ->assertJsonPath('data.status', 'ativo');
+
+    expect(Alerta::query()->count())->toBe(1);
 });
 
 test('test_usuario_id_preenchido_automaticamente', function () {
@@ -485,4 +488,41 @@ test('restore_incendio_retorna_404_se_nao_estiver_excluido', function () {
 
     $this->postJson('/api/incendios/'.$incendio->id.'/restore', [], incendioAuthHeaders($gestor))
         ->assertNotFound();
+});
+
+test('usuario_com_funcao_user_pode_listar_incendios_no_index', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    Incendio::factory()->count(2)->create();
+
+    $response = $this->getJson('/api/incendios', incendioAuthHeaders($usuario));
+
+    $response->assertOk()
+        ->assertJsonPath('meta.total', 2);
+});
+
+test('usuario_com_funcao_user_nao_pode_ver_detalhe_incendio', function () {
+    $usuario = Usuario::factory()->verified()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->getJson('/api/incendios/'.$incendio->id, incendioAuthHeaders($usuario))
+        ->assertForbidden();
+});
+
+test('test_detectado_de_filtra_incendios_posteriores', function () {
+    Incendio::factory()->create(['detectado_em' => '2019-06-15 12:00:00']);
+    $recente = Incendio::factory()->create(['detectado_em' => '2025-06-15 12:00:00']);
+
+    $response = $this->getJson(
+        '/api/incendios?detectado_de='.rawurlencode('2024-01-01T00:00:00Z'),
+        incendioAuthHeaders(),
+    );
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1)
+        ->and($response->json('data.0.id'))->toBe($recente->id);
+});
+
+test('test_detectado_de_invalido_retorna_422', function () {
+    $this->getJson('/api/incendios?detectado_de=invalido', incendioAuthHeaders())
+        ->assertUnprocessable();
 });
