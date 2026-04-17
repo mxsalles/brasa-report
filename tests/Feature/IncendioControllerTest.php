@@ -3,6 +3,7 @@
 use App\Enums\NivelRiscoIncendio;
 use App\Enums\StatusIncendio;
 use App\Models\AreaMonitorada;
+use App\Models\DespachoBrigada;
 use App\Models\Incendio;
 use App\Models\LogAuditoria;
 use App\Models\Usuario;
@@ -263,20 +264,20 @@ test('test_atualiza_status_do_incendio', function () {
     $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
 
     $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
-        'status' => 'contido',
+        'status' => 'em_combate',
     ], incendioAuthHeaders())
         ->assertOk()
-        ->assertJsonPath('data.status', 'contido');
+        ->assertJsonPath('data.status', 'em_combate');
 
-    expect($incendio->fresh()->status)->toBe(StatusIncendio::Contido);
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::EmCombate);
 });
 
 test('test_registra_status_anterior_e_novo_no_log', function () {
-    $autor = Usuario::factory()->brigadista()->create();
+    $autor = Usuario::factory()->gestor()->create();
     $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
 
     $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
-        'status' => 'resolvido',
+        'status' => 'em_combate',
     ], incendioAuthHeaders($autor))
         ->assertOk();
 
@@ -289,7 +290,7 @@ test('test_registra_status_anterior_e_novo_no_log', function () {
     expect($log)->not->toBeNull()
         ->and($log->dados_json)->toHaveKeys(['status_anterior', 'status_novo'])
         ->and($log->dados_json['status_anterior'])->toBe('ativo')
-        ->and($log->dados_json['status_novo'])->toBe('resolvido')
+        ->and($log->dados_json['status_novo'])->toBe('em_combate')
         ->and($log->usuario_id)->toBe($autor->id);
 });
 
@@ -300,6 +301,66 @@ test('test_retorna_422_com_status_invalido', function () {
         'status' => 'invalido',
     ], incendioAuthHeaders())
         ->assertUnprocessable();
+});
+
+test('test_fluxo_linear_completo_de_status', function () {
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+    $headers = incendioAuthHeaders();
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'em_combate',
+    ], $headers)->assertOk();
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'contido',
+    ], $headers)->assertOk();
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'resolvido',
+    ], $headers)->assertOk();
+
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::Resolvido);
+});
+
+test('test_rejeita_transicao_fora_de_ordem', function () {
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'contido',
+    ], incendioAuthHeaders())
+        ->assertUnprocessable();
+
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::Ativo);
+});
+
+test('test_rejeita_retrocesso_de_status', function () {
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::EmCombate]);
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'ativo',
+    ], incendioAuthHeaders())
+        ->assertUnprocessable();
+
+    expect($incendio->fresh()->status)->toBe(StatusIncendio::EmCombate);
+});
+
+test('test_resolvido_nao_pode_avancar', function () {
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Resolvido]);
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'ativo',
+    ], incendioAuthHeaders())
+        ->assertUnprocessable();
+});
+
+test('test_brigadista_nao_pode_atualizar_status', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $incendio = Incendio::factory()->create(['status' => StatusIncendio::Ativo]);
+
+    $this->patchJson('/api/incendios/'.$incendio->id.'/status', [
+        'status' => 'em_combate',
+    ], incendioAuthHeaders($brigadista))
+        ->assertForbidden();
 });
 
 test('test_atualiza_nivel_de_risco', function () {
@@ -343,4 +404,85 @@ test('test_retorna_422_com_risco_invalido', function () {
         'nivel_risco' => 'critico',
     ], incendioAuthHeaders())
         ->assertUnprocessable();
+});
+
+test('test_incendio_historico_retorna_estrutura_para_brigadista', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->getJson('/api/incendios/'.$incendio->id.'/historico', incendioAuthHeaders($brigadista))
+        ->assertOk()
+        ->assertJsonStructure([
+            'registro' => ['detectado_em', 'registrado_por', 'area_nome'],
+            'metricas' => ['primeira_chegada_em', 'horas_brigadas_no_local', 'horas_em_combate'],
+            'eventos',
+        ]);
+});
+
+test('test_incendio_historico_negado_para_usuario_comum', function () {
+    $usuario = Usuario::factory()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->getJson('/api/incendios/'.$incendio->id.'/historico', incendioAuthHeaders($usuario))
+        ->assertForbidden();
+});
+
+test('test_incendio_historico_requer_autenticacao', function () {
+    $incendio = Incendio::factory()->create();
+
+    $this->getJson('/api/incendios/'.$incendio->id.'/historico')
+        ->assertUnauthorized();
+});
+
+test('gestor_remove_incendio_sem_despacho_aberto', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->deleteJson('/api/incendios/'.$incendio->id, [], incendioAuthHeaders($gestor))
+        ->assertNoContent();
+
+    $this->assertSoftDeleted('incendios', ['id' => $incendio->id]);
+});
+
+test('remove_incendio_retorna_409_com_despacho_aberto', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+    DespachoBrigada::factory()->create([
+        'incendio_id' => $incendio->id,
+        'finalizado_em' => null,
+    ]);
+
+    $this->deleteJson('/api/incendios/'.$incendio->id, [], incendioAuthHeaders($gestor))
+        ->assertStatus(409)
+        ->assertJsonStructure(['message']);
+
+    expect(Incendio::find($incendio->id))->not->toBeNull();
+});
+
+test('gestor_restaura_incendio_excluido', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+    $incendio->delete();
+
+    $this->postJson('/api/incendios/'.$incendio->id.'/restore', [], incendioAuthHeaders($gestor))
+        ->assertOk()
+        ->assertJsonPath('data.id', $incendio->id);
+
+    expect(Incendio::find($incendio->id))->not->toBeNull();
+});
+
+test('brigadista_nao_pode_remover_incendio', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->deleteJson('/api/incendios/'.$incendio->id, [], incendioAuthHeaders($brigadista))
+        ->assertForbidden();
+});
+
+test('restore_incendio_retorna_404_se_nao_estiver_excluido', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $incendio = Incendio::factory()->create();
+
+    $this->postJson('/api/incendios/'.$incendio->id.'/restore', [], incendioAuthHeaders($gestor))
+        ->assertNotFound();
 });

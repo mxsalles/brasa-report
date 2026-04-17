@@ -9,11 +9,14 @@ use App\Http\Requests\Incendio\AtualizarStatusRequest;
 use App\Http\Requests\Incendio\StoreIncendioRequest;
 use App\Http\Requests\Incendio\UpdateIncendioRequest;
 use App\Http\Resources\IncendioResource;
+use App\Models\DespachoBrigada;
 use App\Models\Incendio;
 use App\Models\LogAuditoria;
 use App\Models\Usuario;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class IncendioController extends Controller
 {
@@ -117,6 +120,53 @@ class IncendioController extends Controller
         return new IncendioResource($incendio->fresh(['area', 'localCritico', 'deteccaoSatelite', 'usuario']));
     }
 
+    public function destroy(Request $request, Incendio $incendio): JsonResponse|Response
+    {
+        if (DespachoBrigada::query()
+            ->where('incendio_id', $incendio->id)
+            ->whereNull('finalizado_em')
+            ->exists()) {
+            return response()->json([
+                'message' => 'Não é possível remover um incêndio com despacho em aberto. Finalize os despachos antes.',
+            ], 409);
+        }
+
+        /** @var Usuario $usuario */
+        $usuario = $request->user();
+
+        LogAuditoria::query()->create([
+            'usuario_id' => $usuario->id,
+            'acao' => 'remocao_incendio',
+            'entidade_tipo' => 'incendios',
+            'entidade_id' => $incendio->id,
+            'dados_json' => null,
+        ]);
+
+        $incendio->delete();
+
+        return response()->noContent();
+    }
+
+    public function restore(Request $request, string $id): IncendioResource
+    {
+        $incendio = Incendio::onlyTrashed()->findOrFail($id);
+
+        /** @var Usuario $usuario */
+        $usuario = $request->user();
+
+        LogAuditoria::query()->create([
+            'usuario_id' => $usuario->id,
+            'acao' => 'restauracao_incendio',
+            'entidade_tipo' => 'incendios',
+            'entidade_id' => $incendio->id,
+            'dados_json' => null,
+        ]);
+
+        $incendio->restore();
+
+        return new IncendioResource($incendio->fresh(['area', 'localCritico', 'deteccaoSatelite', 'usuario']));
+    }
+
     /**
      * Papéis futuros: brigadista, gestor, admin
      */
@@ -173,5 +223,169 @@ class IncendioController extends Controller
         ]);
 
         return new IncendioResource($incendio->fresh(['area', 'localCritico', 'deteccaoSatelite', 'usuario']));
+    }
+
+    /**
+     * Linha do tempo e métricas do incêndio (registro, status, risco, despachos).
+     */
+    public function historico(Incendio $incendio): JsonResponse
+    {
+        $incendio->load(['usuario', 'area']);
+
+        $logsIncendio = LogAuditoria::query()
+            ->where('entidade_tipo', 'incendios')
+            ->where('entidade_id', $incendio->id)
+            ->with('usuario')
+            ->orderBy('criado_em')
+            ->get();
+
+        $despachos = DespachoBrigada::query()
+            ->where('incendio_id', $incendio->id)
+            ->with('brigada')
+            ->orderBy('despachado_em')
+            ->get();
+
+        $eventos = [];
+
+        if ($incendio->detectado_em !== null) {
+            $eventos[] = [
+                'em' => $incendio->detectado_em->toIso8601String(),
+                'tipo' => 'registro',
+                'rotulo' => 'Incêndio registrado',
+                'detalhe' => 'Registrado por '.($incendio->usuario?->nome ?? '—'),
+                'usuario_nome' => $incendio->usuario?->nome,
+            ];
+        }
+
+        foreach ($logsIncendio as $log) {
+            if ($log->acao === 'registro_incendio') {
+                continue;
+            }
+
+            $nomeUsuario = $log->usuario?->nome;
+            $dados = $log->dados_json ?? [];
+
+            if ($log->acao === 'atualizacao_status_incendio') {
+                $ant = $dados['status_anterior'] ?? '—';
+                $novo = $dados['status_novo'] ?? '—';
+                $eventos[] = [
+                    'em' => $log->criado_em?->toIso8601String(),
+                    'tipo' => 'mudanca_status',
+                    'rotulo' => 'Status do incêndio alterado',
+                    'detalhe' => "{$ant} → {$novo}",
+                    'usuario_nome' => $nomeUsuario,
+                ];
+            } elseif ($log->acao === 'atualizacao_risco_incendio') {
+                $ant = $dados['nivel_risco_anterior'] ?? '—';
+                $novo = $dados['nivel_risco_novo'] ?? '—';
+                $eventos[] = [
+                    'em' => $log->criado_em?->toIso8601String(),
+                    'tipo' => 'mudanca_risco',
+                    'rotulo' => 'Nível de risco alterado',
+                    'detalhe' => "{$ant} → {$novo}",
+                    'usuario_nome' => $nomeUsuario,
+                ];
+            } elseif ($log->acao === 'atualizacao_incendio') {
+                $eventos[] = [
+                    'em' => $log->criado_em?->toIso8601String(),
+                    'tipo' => 'atualizacao',
+                    'rotulo' => 'Dados do incêndio atualizados',
+                    'detalhe' => null,
+                    'usuario_nome' => $nomeUsuario,
+                ];
+            }
+        }
+
+        foreach ($despachos as $d) {
+            $nomeBrigada = $d->brigada?->nome ?? '—';
+
+            $eventos[] = [
+                'em' => $d->despachado_em?->toIso8601String(),
+                'tipo' => 'despacho',
+                'rotulo' => 'Brigada despachada',
+                'detalhe' => "Brigada {$nomeBrigada} a caminho do local",
+                'usuario_nome' => null,
+                'brigada_nome' => $nomeBrigada,
+            ];
+
+            if ($d->chegada_em !== null) {
+                $eventos[] = [
+                    'em' => $d->chegada_em->toIso8601String(),
+                    'tipo' => 'chegada',
+                    'rotulo' => 'Chegada ao local',
+                    'detalhe' => "Brigada {$nomeBrigada} chegou ao local",
+                    'usuario_nome' => null,
+                    'brigada_nome' => $nomeBrigada,
+                ];
+            }
+
+            if ($d->finalizado_em !== null) {
+                $eventos[] = [
+                    'em' => $d->finalizado_em->toIso8601String(),
+                    'tipo' => 'finalizacao_despacho',
+                    'rotulo' => 'Despacho finalizado',
+                    'detalhe' => $d->observacoes
+                        ? "Brigada {$nomeBrigada} — {$d->observacoes}"
+                        : "Brigada {$nomeBrigada} finalizou a operação",
+                    'usuario_nome' => null,
+                    'brigada_nome' => $nomeBrigada,
+                ];
+            }
+        }
+
+        usort($eventos, function (array $a, array $b): int {
+            $ta = $a['em'] ?? '';
+            $tb = $b['em'] ?? '';
+
+            return strcmp((string) $ta, (string) $tb);
+        });
+
+        $primeiraChegada = $despachos->min('chegada_em');
+
+        $horasBrigadasNoLocal = 0.0;
+        foreach ($despachos as $d) {
+            if ($d->chegada_em !== null && $d->finalizado_em !== null) {
+                $horasBrigadasNoLocal += $d->chegada_em->diffInMinutes($d->finalizado_em) / 60;
+            }
+        }
+
+        $inicioCombateStatus = null;
+        $fimCombateStatus = null;
+        foreach ($logsIncendio as $log) {
+            if ($log->acao !== 'atualizacao_status_incendio') {
+                continue;
+            }
+            $dados = $log->dados_json ?? [];
+            $novo = $dados['status_novo'] ?? null;
+            if ($novo === StatusIncendio::EmCombate->value && $inicioCombateStatus === null) {
+                $inicioCombateStatus = $log->criado_em;
+            }
+            if ($novo === StatusIncendio::Contido->value) {
+                $fimCombateStatus = $log->criado_em;
+            }
+        }
+
+        $horasEmCombate = null;
+        if ($inicioCombateStatus instanceof Carbon) {
+            if ($fimCombateStatus instanceof Carbon) {
+                $horasEmCombate = round($inicioCombateStatus->diffInMinutes($fimCombateStatus) / 60, 2);
+            } elseif ($incendio->status === StatusIncendio::EmCombate) {
+                $horasEmCombate = round($inicioCombateStatus->diffInMinutes(Carbon::now()) / 60, 2);
+            }
+        }
+
+        return response()->json([
+            'registro' => [
+                'detectado_em' => $incendio->detectado_em?->toIso8601String(),
+                'registrado_por' => $incendio->usuario?->nome,
+                'area_nome' => $incendio->area?->nome ?? '—',
+            ],
+            'metricas' => [
+                'primeira_chegada_em' => $primeiraChegada instanceof Carbon ? $primeiraChegada->toIso8601String() : null,
+                'horas_brigadas_no_local' => round($horasBrigadasNoLocal, 2),
+                'horas_em_combate' => $horasEmCombate,
+            ],
+            'eventos' => array_values($eventos),
+        ]);
     }
 }

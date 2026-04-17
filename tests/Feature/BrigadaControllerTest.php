@@ -266,3 +266,31 @@ test('brigadista nao pode criar brigada', function () {
         'tipo' => 'florestal',
     ], brigadaAuthHeaders($usuario))->assertForbidden();
 });
+
+test('gestor_restaura_brigada_excluida', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $brigada = Brigada::factory()->create();
+    $brigada->delete();
+
+    $this->postJson('/api/brigadas/'.$brigada->id.'/restore', [], brigadaAuthHeaders($gestor))
+        ->assertOk()
+        ->assertJsonPath('data.id', $brigada->id);
+
+    expect(Brigada::find($brigada->id))->not->toBeNull();
+});
+
+test('restore_brigada_retorna_404_se_nao_estiver_excluida', function () {
+    $brigada = Brigada::factory()->create();
+
+    $this->postJson('/api/brigadas/'.$brigada->id.'/restore', [], brigadaAuthHeaders())
+        ->assertNotFound();
+});
+
+test('brigadista_nao_pode_restaurar_brigada', function () {
+    $brigadista = Usuario::factory()->brigadista()->create();
+    $brigada = Brigada::factory()->create();
+    $brigada->delete();
+
+    $this->postJson('/api/brigadas/'.$brigada->id.'/restore', [], brigadaAuthHeaders($brigadista))
+        ->assertForbidden();
+});

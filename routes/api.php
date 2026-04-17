@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
         Route::post('/brigadas', [BrigadaController::class, 'store']);
         Route::put('/brigadas/{brigada}', [BrigadaController::class, 'update']);
         Route::delete('/brigadas/{brigada}', [BrigadaController::class, 'destroy']);
+        Route::post('/brigadas/{id}/restore', [BrigadaController::class, 'restore'])->whereUuid('id');
 
         Route::get('/areas-monitoradas', [AreaMonitoradaController::class, 'index']);
         Route::get('/areas-monitoradas/{area}', [AreaMonitoradaController::class, 'show']);
@@ -63,6 +64,7 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
         Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
         Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
+        Route::post('/usuarios/{id}/restore', [UsuarioController::class, 'restore'])->whereUuid('id');
 
         Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index']);
         Route::get('/logs-auditoria/{log}', [LogAuditoriaController::class, 'show']);
@@ -80,7 +82,7 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
         Route::get('/incendios', [IncendioController::class, 'index']);
         Route::post('/incendios', [IncendioController::class, 'store']);
         Route::get('/incendios/{incendio}', [IncendioController::class, 'show']);
-        Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
+        Route::get('/incendios/{incendio}/historico', [IncendioController::class, 'historico']);
 
         Route::get('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'index']);
         Route::post('/incendios/{incendio}/leituras', [LeituraMeteorologicaController::class, 'store']);
@@ -96,7 +98,10 @@ Route::middleware(['auth:sanctum', 'nao-bloqueado'])->group(function (): void {
 
     Route::middleware('funcao:gestor|administrador')->group(function (): void {
         Route::put('/incendios/{incendio}', [IncendioController::class, 'update']);
+        Route::delete('/incendios/{incendio}', [IncendioController::class, 'destroy']);
+        Route::patch('/incendios/{incendio}/status', [IncendioController::class, 'atualizarStatus']);
         Route::patch('/incendios/{incendio}/risco', [IncendioController::class, 'atualizarRisco']);
+        Route::post('/incendios/{id}/restore', [IncendioController::class, 'restore'])->whereUuid('id');
 
         Route::post('/incendios/{incendio}/despachos', [DespachoBrigadaController::class, 'store']);
         Route::patch('/incendios/{incendio}/despachos/{despacho}/chegada', [DespachoBrigadaController::class, 'registrarChegada']);

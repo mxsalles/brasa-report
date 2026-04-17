@@ -441,11 +441,12 @@ para não revelar existência de conta. Todos os tokens Sanctum revogados após 
 - `GET    /api/brigadas/{brigada}` — auth:sanctum (user, brigadista, gestor, administrador)
 - `PUT    /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
 - `DELETE /api/brigadas/{brigada}` — auth:sanctum (gestor, administrador)
+- `POST   /api/brigadas/{id}/restore` — auth:sanctum (gestor, administrador) — restaura apenas registro **excluso logicamente** (`onlyTrashed`)
 - `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, administrador)
 
 Bloqueia remoção de brigada com membros vinculados (409).
-`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida.
-Log de auditoria em criação, atualização, remoção e atualização de localização.
+`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida; `POST .../restore` reverte a exclusão lógica.
+Log de auditoria em criação, atualização, remoção, restauração e atualização de localização.
 Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 Membros listados via `UsuarioResource` em modo restrito (`$somenteMembroBrigada = true`).
 
@@ -484,17 +485,18 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 - `GET    /api/usuarios/{usuario}` — auth:sanctum (administrador)
 - `PUT    /api/usuarios/{usuario}` — auth:sanctum (administrador)
 - `DELETE /api/usuarios/{usuario}` — auth:sanctum (administrador)
+- `POST   /api/usuarios/{id}/restore` — auth:sanctum (administrador) — restaura apenas conta **excluída logicamente**
 - `PATCH  /api/usuarios/{usuario}/funcao` — auth:sanctum (gestor, administrador) — gestor só `user`/`brigadista` e não altera outros gestores/administradores
 - `PATCH  /api/usuarios/{usuario}/brigada` — auth:sanctum (gestor, administrador) — gestor não altera brigada de gestores/administradores
 - `PATCH  /api/usuarios/{usuario}/bloqueio` — auth:sanctum (gestor, administrador) — gestor não altera bloqueio de gestores/administradores
 
 Bloqueia remoção do próprio usuário autenticado (403).
-`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida.
+`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida; `POST .../restore` reverte a exclusão lógica (só administrador).
 Bloqueia remoção de usuário com incêndios vinculados (409).
 Bloqueia alteração da própria função (403). Bloqueio da própria conta (403).
 Tokens Sanctum revogados antes da remoção.
 senha_hash e cpf nunca expostos. UsuarioResource em modo completo (inclui `bloqueado`, `brigada_nome` quando cargada).
-Log de auditoria em criação, atualização, remoção, mudança de função, brigada e bloqueio/desbloqueio.
+Log de auditoria em criação, atualização, remoção, restauração, mudança de função, brigada e bloqueio/desbloqueio.
 Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 ### BrigadasPageController (Inertia)
@@ -535,10 +537,12 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 - `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, administrador)
 - `GET   /api/incendios/{incendio}/historico` — auth:sanctum (brigadista, gestor, administrador) — linha do tempo (registro, logs, despachos, métricas)
 - `PUT   /api/incendios/{incendio}` — auth:sanctum (gestor, administrador)
+- `DELETE /api/incendios/{incendio}` — auth:sanctum (gestor, administrador) — soft delete; bloqueado (409) se existir despacho com `finalizado_em` nulo
 - `PATCH /api/incendios/{incendio}/status` — auth:sanctum (gestor, administrador)
 - `PATCH /api/incendios/{incendio}/risco` — auth:sanctum (gestor, administrador)
+- `POST  /api/incendios/{id}/restore` — auth:sanctum (gestor, administrador) — restaura apenas ocorrência **excluída logicamente**
 
-Sem rota `DELETE` — o modelo suporta soft delete (`deleted_at`) para uso futuro ou operações internas; registros visíveis permanecem imutáveis pela API pública.
+`DELETE` e `restore` registram auditoria (`remocao_incendio`, `restauracao_incendio`).
 usuario_id sempre do usuário autenticado — nunca do payload.
 status não aceito em store nem update — endpoint dedicado.
 Status segue fluxo linear: `ativo` → `em_combate` → `contido` → `resolvido`. Transições fora de ordem são rejeitadas (422). O status `em_combate` é atingido automaticamente quando a primeira brigada registra chegada no local (`DespachoBrigadaController::registrarChegada`).

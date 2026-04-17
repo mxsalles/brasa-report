@@ -429,3 +429,32 @@ test('nao pode alternar proprio bloqueio', function () {
     $this->patchJson('/api/usuarios/'.$admin->id.'/bloqueio', [], usuarioAuthHeaders($admin))
         ->assertForbidden();
 });
+
+test('administrador_restaura_usuario_excluido', function () {
+    $admin = Usuario::factory()->administrador()->create();
+    $alvo = Usuario::factory()->create();
+    $alvo->delete();
+
+    $this->postJson('/api/usuarios/'.$alvo->id.'/restore', [], usuarioAuthHeaders($admin))
+        ->assertOk()
+        ->assertJsonPath('data.id', $alvo->id);
+
+    expect(Usuario::find($alvo->id))->not->toBeNull();
+});
+
+test('gestor_nao_pode_restaurar_usuario', function () {
+    $gestor = Usuario::factory()->gestor()->create();
+    $alvo = Usuario::factory()->create();
+    $alvo->delete();
+
+    $this->postJson('/api/usuarios/'.$alvo->id.'/restore', [], usuarioAuthHeaders($gestor))
+        ->assertForbidden();
+});
+
+test('restore_usuario_retorna_404_se_nao_estiver_excluido', function () {
+    $admin = Usuario::factory()->administrador()->create();
+    $alvo = Usuario::factory()->create();
+
+    $this->postJson('/api/usuarios/'.$alvo->id.'/restore', [], usuarioAuthHeaders($admin))
+        ->assertNotFound();
+});

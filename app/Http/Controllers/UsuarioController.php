@@ -126,6 +126,26 @@ class UsuarioController extends Controller
         return response()->noContent();
     }
 
+    public function restore(Request $request, string $id): UsuarioResource
+    {
+        $usuario = Usuario::onlyTrashed()->findOrFail($id);
+
+        /** @var Usuario $autor */
+        $autor = $request->user();
+
+        LogAuditoria::query()->create([
+            'usuario_id' => $autor->id,
+            'acao' => 'restauracao_usuario',
+            'entidade_tipo' => 'usuarios',
+            'entidade_id' => $usuario->id,
+            'dados_json' => null,
+        ]);
+
+        $usuario->restore();
+
+        return new UsuarioResource($usuario->fresh()->load('brigada'));
+    }
+
     public function atualizarFuncao(AtualizarFuncaoRequest $request, Usuario $usuario): JsonResponse|UsuarioResource
     {
         /** @var Usuario $autor */
