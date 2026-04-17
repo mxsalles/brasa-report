@@ -45,10 +45,10 @@ Por decisão de branding, o produto passou a chamar-se **Canindé** (UI alinhada
 
 ### Rotas alinhadas ao protótipo Canindé
 
-**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API).
-**Páginas ainda com mock:** mapa, alertas. **Administração** usa dados reais (Inertia + API para alterações).
+**Páginas com dados reais:** dashboard (KPIs via props Inertia), registrar-incendio (área padrão «Pantanal Geral» via prop Inertia `areaPadrao`; envio com POST `/api/incendios`), brigadas (dados reais via `BrigadasPageController` + CRUD via API), mapa (incêndios reais via `MapaPageController` + condições climáticas via **OpenMeteo** no backend, mesmo serviço/cache que o dashboard).
+**Páginas ainda com mock:** alertas. **Administração** usa dados reais (Inertia + API para alterações).
 
-As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Dados auxiliares em `resources/js/data/operacoes-mock.ts` e mapa com **Leaflet** onde ainda mock.
+As rotas autenticadas **mapa**, **registrar-incendio**, **alertas**, **brigadas** e **administracao** estão registadas em Laravel e expostas na sidebar. Mapa usa **Leaflet** com dados reais do banco.
 
 Dashboard agora também consome `GET /api/dashboard` via axios (Sanctum stateful) para atualização e inclui clima atual via **OpenMeteo** (chamada no backend com cache).
 
@@ -93,7 +93,7 @@ O aplicativo é 100 % pt-BR. Todas as strings visíveis ao usuário — validaç
 - **Campos `criado_em` e `atualizado_em`:** autogeridos no banco via `DEFAULT NOW()` e trigger
 - **Sem extensões externas:** sem `uuid-ossp`, sem `postgis` — coordenadas em `NUMERIC(10,7)`, geometria de áreas em GeoJSON (`longText` / JSON serializado)
 - **Chaves primárias:** sempre `id UUID`
-- **Soft delete:** não adotado — deleção física com `ON DELETE` explícito
+- **Soft delete:** adotado em `brigadas`, `incendios` e `usuarios` (coluna `deleted_at` em `TIMESTAMPTZ`). Os `DELETE` da API correspondentes marcam exclusão lógica; listagens e resolução por ID ignoram registros eliminados. Outras entidades continuam com remoção física onde já existia.
 
 ---
 
@@ -187,6 +187,7 @@ usuarios
   └── logs_auditoria (1:N via usuario_id nullable)
 
 Coluna `bloqueado` (boolean, default false) em `usuarios` — bloqueio operacional; não confundir com exclusão de conta.
+Tabelas `brigadas`, `incendios` e `usuarios` possuem `deleted_at` (`TIMESTAMPTZ`, nullable) para exclusão lógica.
 
 areas_monitoradas
   └── incendios (1:N via area_id — OBRIGATÓRIO)
@@ -350,6 +351,9 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 | Testes de dashboard                | `tests/Feature/DashboardControllerTest.php`                                    | —                                                     |
 | BrigadasPageController (Inertia)  | `app/Http/Controllers/BrigadasPageController.php`                              | Página Inertia com dados reais + CRUD via API          |
 | Testes da página brigadas         | `tests/Feature/BrigadasPageControllerTest.php`                                 | —                                                     |
+| MapaPageController (Inertia)      | `app/Http/Controllers/MapaPageController.php`                                  | Página Inertia com dados reais do mapa                 |
+| Testes da página mapa             | `tests/Feature/MapaPageControllerTest.php`                                     | —                                                     |
+| Migration em_combate              | `database/migrations/2026_04_16_222620_add_em_combate_to_status_incendio_enum.php` | Adiciona 'em_combate' ao enum PostgreSQL           |
 | Arquivos de idioma pt_BR          | `lang/pt_BR/validation.php`, `auth.php`, `passwords.php`, `pagination.php`     | Validação, auth, senhas, paginação traduzidos          |
 | Teste de locale                   | `tests/Unit/AppLocaleTest.php`                                                 | Garante locale/fallback/faker = pt_BR                  |
 | Teste de política de senha        | `tests/Unit/PasswordPolicyTest.php`                                            | Produção: mínimo 8 caracteres sem regras de complexidade |
@@ -365,7 +369,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [x] LocalCriticoController — CRUD
 - [x] UsuarioController — CRUD + atualizarFuncao + atualizarBrigada
 - [x] DeteccaoSateliteController — ingestão + consulta (integração NASA FIRMS pendente)
-- [x] IncendioController — registro + status + risco
+- [x] IncendioController — registro + status (fluxo linear com em_combate) + risco
 - [x] LeituraMeteorologicaController — registro + consulta aninhada
 - [x] DespachoBrigadaController — despacho + chegada + finalização
 - [x] AlertaController — leitura + marcarEntregue
@@ -377,7 +381,7 @@ Todos os Models têm `$keyType = 'string'` e `$incrementing = false`.
 - [x] HasUuids — auditoria e uniformização em todos os Models
 - [x] Integração OpenMeteo (dashboard: clima atual via API; persistência/Job ainda pendente)
 - [ ] Integração NASA FIRMS
-- [ ] Visualização de mapa (frontend)
+- [x] Visualização de mapa (frontend — dados reais, popup + dialog de gerenciamento de status)
 - [ ] Sistema de alertas (push + email)
 - [x] Registro de incêndio — formulário real + Leaflet + toast
 - [x] Dashboard — KPIs reais do banco
@@ -440,6 +444,7 @@ para não revelar existência de conta. Todos os tokens Sanctum revogados após 
 - `PATCH  /api/brigadas/{brigada}/localizacao` — auth:sanctum (brigadista, gestor, administrador)
 
 Bloqueia remoção de brigada com membros vinculados (409).
+`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida.
 Log de auditoria em criação, atualização, remoção e atualização de localização.
 Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 Membros listados via `UsuarioResource` em modo restrito (`$somenteMembroBrigada = true`).
@@ -484,6 +489,7 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 - `PATCH  /api/usuarios/{usuario}/bloqueio` — auth:sanctum (gestor, administrador) — gestor não altera bloqueio de gestores/administradores
 
 Bloqueia remoção do próprio usuário autenticado (403).
+`DELETE` aplica soft delete (`deleted_at`) quando a remoção é permitida.
 Bloqueia remoção de usuário com incêndios vinculados (409).
 Bloqueia alteração da própria função (403). Bloqueio da própria conta (403).
 Tokens Sanctum revogados antes da remoção.
@@ -495,7 +501,8 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 
 - `GET /brigadas` — web `auth`, `verified`, `nao-bloqueado` — exibe brigadas com dados reais (contagem de membros), despachos ativos/finalizados e CRUD condicional (gestor/administrador).
 
-Props Inertia: `brigadas`, `despachosAtivos` (sem `finalizado_em`, sem limite), `despachosFinalizados` (com `finalizado_em`, limit 20), `podeGerenciar` (boolean), `funcaoAutenticado`, `usuariosDisponiveis` (usuários sem brigada, não bloqueados — só quando `podeGerenciar`), `incendiosAtivos` (incêndios com status ativo/contido, com área eager loaded — só quando `podeGerenciar`).
+Props Inertia: `brigadas`, `despachosAtivos` (sem `finalizado_em`, sem limite), `despachosFinalizados` (com `finalizado_em`, limit 20), `podeGerenciar` (boolean), `funcaoAutenticado`, `usuariosDisponiveis` (usuários sem brigada, não bloqueados — só quando `podeGerenciar`), `incendiosAtivos` (incêndios com status ativo/em combate/contido, com área eager loaded — só quando `podeGerenciar`).
+Cada item em `brigadas` pode incluir `operacao_incendio`: `null` ou `{ fase, incendio_status, area_nome }` quando existe despacho em aberto — `fase` é `em_deslocamento` (sem `chegada_em`) ou `em_combate` (com `chegada_em`). No card: `StatusBadge` do incêndio + selo de fase e área.
 Frontend usa toggle segmentado (padrão da página de administração) para alternar entre aba "Brigadas" (cards + Nova Brigada) e aba "Despachos" (despachos ativos, histórico finalizado, botão Despachar).
 Frontend consome API (`POST /api/brigadas`, `PUT`, `DELETE`) para operações de escrita, `GET /api/brigadas/{brigada}` para detalhes com membros (sob demanda via Dialog), e `PATCH /api/usuarios/{usuario}/brigada` para vincular/desvincular membros ao salvar.
 Formulário de criar/editar: nome, tipo, disponível, seleção de membros (com busca). Coordenadas não são definidas na criação — são atualizadas via despacho.
@@ -526,16 +533,25 @@ Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
 - `GET   /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
 - `POST  /api/incendios` — auth:sanctum (brigadista, gestor, administrador)
 - `GET   /api/incendios/{incendio}` — auth:sanctum (brigadista, gestor, administrador)
+- `GET   /api/incendios/{incendio}/historico` — auth:sanctum (brigadista, gestor, administrador) — linha do tempo (registro, logs, despachos, métricas)
 - `PUT   /api/incendios/{incendio}` — auth:sanctum (gestor, administrador)
-- `PATCH /api/incendios/{incendio}/status` — auth:sanctum (brigadista, gestor, administrador)
+- `PATCH /api/incendios/{incendio}/status` — auth:sanctum (gestor, administrador)
 - `PATCH /api/incendios/{incendio}/risco` — auth:sanctum (gestor, administrador)
 
-Sem destroy — registros históricos imutáveis.
+Sem rota `DELETE` — o modelo suporta soft delete (`deleted_at`) para uso futuro ou operações internas; registros visíveis permanecem imutáveis pela API pública.
 usuario_id sempre do usuário autenticado — nunca do payload.
 status não aceito em store nem update — endpoint dedicado.
+Status segue fluxo linear: `ativo` → `em_combate` → `contido` → `resolvido`. Transições fora de ordem são rejeitadas (422). O status `em_combate` é atingido automaticamente quando a primeira brigada registra chegada no local (`DespachoBrigadaController::registrarChegada`).
 Eager load de area, localCritico, deteccaoSatelite, usuario.
 Log de auditoria em registro, atualização, mudança de status e risco.
 Papéis: middleware `funcao` + `nao-bloqueado` (ver `routes/api.php`).
+
+### MapaPageController (Inertia)
+
+- `GET /mapa` — web `auth`, `verified`, `nao-bloqueado` — exibe mapa Leaflet com incêndios reais do banco.
+
+Props Inertia: `incendios` (ativos, em combate, contidos e resolvidos com área e local crítico), `condicoesClimaticas` — mesmo payload que o clima do dashboard (`temperatura_c`, `umidade_pct`, `atualizado_em` via **OpenMeteo**, cache de 15 minutos, coordenadas em `config/services.php` → `open_meteo`) ou `null` se a API falhar; `podeGerenciar` (boolean — gestor/administrador).
+Frontend: mapa Leaflet com marcadores coloridos por status, popup com detalhes, dialog com toggle Detalhes/Histórico (histórico via `GET /api/incendios/{incendio}/historico` quando aplicável), painel lateral de ocorrências, card de condições climáticas. Legenda inclui Ativo, Em Combate, Contido, Resolvido.
 
 ### LeituraMeteorologicaController
 
