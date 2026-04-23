@@ -37,6 +37,9 @@ php artisan event:cache
 echo "Executando migrations..."
 php artisan migrate --force --no-interaction
 
+echo "Executando sementes de deploy..."
+php artisan deploy:seed --no-interaction
+
 echo "=== Iniciando Nginx + PHP-FPM ==="
 mkdir -p /var/log/supervisor
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
