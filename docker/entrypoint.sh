@@ -37,10 +37,12 @@ php artisan event:cache
 echo "Executando migrations..."
 php artisan migrate --force --no-interaction
 
-# Garante que o comando existe nesta imagem antes de semear (falha rápido se código desatualizado).
+# Garante que o comando existe antes de semear (sem pipe/grep: mais confiável em Alpine).
 echo "Verificando comando deploy:seed..."
-if ! php artisan list deploy --no-interaction --no-ansi 2>/dev/null | grep -q 'deploy:seed'; then
-    echo "ERRO: deploy:seed não está registrado. Confira se routes/console.php está na imagem e se não há Release Command duplicando migrações fora do container."
+if ! php artisan help deploy:seed --no-interaction --no-ansi >/dev/null 2>&1; then
+    echo "ERRO: deploy:seed não disponível ou o Artisan falhou ao carregar o comando."
+    echo "Saída do help (para diagnóstico):"
+    php artisan help deploy:seed --no-interaction --no-ansi 2>&1 || true
     exit 1
 fi
 

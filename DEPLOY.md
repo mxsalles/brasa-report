@@ -66,7 +66,7 @@ O `entrypoint.sh` vai automaticamente:
 1. Aguardar o PostgreSQL iniciar
 2. Rodar `config:cache`, `route:cache`, `view:cache`, `event:cache`
 3. Rodar `php artisan migrate --force`
-4. Confirmar que `deploy:seed` está registrado (`php artisan list deploy`), senão encerra com erro
+4. Confirmar que `deploy:seed` existe (`php artisan help deploy:seed`), senão encerra com erro e mostra a saída do Artisan
 5. Rodar `php artisan deploy:seed`
 6. Iniciar Nginx + PHP-FPM via Supervisor
 
