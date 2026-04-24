@@ -1,6 +1,5 @@
 <?php
 
-use App\Console\Commands\DeploySeedCommand;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\VerificarFuncao;
 use App\Http\Middleware\VerificarNaoBloqueado;
@@ -16,9 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withCommands([
-        DeploySeedCommand::class,
-    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->encryptCookies(except: ['sidebar_state']);
