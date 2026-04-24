@@ -1,0 +1,24 @@
+# Laravel Cloud Configuration
+# https://cloud.laravel.com/docs
+
+# Build configuration
+build:
+  commands:
+    - composer install --no-dev --optimize-autoloader --no-interaction
+    - npm ci
+    - php artisan wayfinder:generate
+    - npm run build
+    - php artisan config:cache
+    - php artisan route:cache
+    - php artisan view:cache
+
+# Deploy configuration
+deploy:
+  commands:
+    - php artisan migrate --force
+    - php artisan storage:link
+
+# Health check
+health:
+  path: /
+  timeout: 30
