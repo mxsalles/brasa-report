@@ -37,8 +37,15 @@ php artisan event:cache
 echo "Executando migrations..."
 php artisan migrate --force --no-interaction
 
+# Garante que o comando existe nesta imagem antes de semear (falha rápido se código desatualizado).
+echo "Verificando comando deploy:seed..."
+if ! php artisan list deploy --no-interaction --no-ansi 2>/dev/null | grep -q 'deploy:seed'; then
+    echo "ERRO: deploy:seed não está registrado. Confira se routes/console.php está na imagem e se não há Release Command duplicando migrações fora do container."
+    exit 1
+fi
+
 echo "Executando sementes de deploy..."
-php artisan app:deploy-seed --no-interaction
+php artisan deploy:seed --no-interaction
 
 echo "=== Iniciando Nginx + PHP-FPM ==="
 mkdir -p /var/log/supervisor

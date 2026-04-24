@@ -1,0 +1,14 @@
+# Render Blueprint (opcional): https://render.com/docs/blueprint-spec
+#
+# Ao criar ou sincronizar o Blueprint, ajuste name/plan/region conforme sua conta.
+#
+# Migrações e deploy:seed rodam em docker/entrypoint.sh depois do Postgres.
+# Não defina preDeployCommand aqui para migrate/seed — evita duplicar e bater
+# em snapshot diferente do container durante o rollout.
+services:
+  - type: web
+    name: brasa-report
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up

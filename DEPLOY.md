@@ -6,6 +6,7 @@
 brasa-report/
 ├── Dockerfile
 ├── docker-compose.prod.yml
+├── render.yaml
 ├── .dockerignore
 └── docker/
     ├── entrypoint.sh
@@ -63,13 +64,23 @@ docker compose -f docker-compose.prod.yml logs -f app
 
 O `entrypoint.sh` vai automaticamente:
 1. Aguardar o PostgreSQL iniciar
-2. Rodar `config:cache`, `route:cache`, `view:cache`
+2. Rodar `config:cache`, `route:cache`, `view:cache`, `event:cache`
 3. Rodar `php artisan migrate --force`
-4. Iniciar Nginx + PHP-FPM via Supervisor
+4. Confirmar que `deploy:seed` está registrado (`php artisan list deploy`), senão encerra com erro
+5. Rodar `php artisan deploy:seed`
+6. Iniciar Nginx + PHP-FPM via Supervisor
 
 ---
 
-## 4. Deploy no Railway (recomendado para vocês)
+## 4. Render (Docker)
+
+- **Fonte única:** migrações e `deploy:seed` rodam no [`docker/entrypoint.sh`](docker/entrypoint.sh) depois do Postgres. Não configure **Pre-Deploy Command** / **Release Command** no painel com `migrate` + `deploy:seed` de novo: isso duplica trabalho e pode rodar em snapshot diferente do container durante o rollout.
+- Opcional: use o [`render.yaml`](render.yaml) na raiz como Blueprint (ajuste `name`, `plan`, `region` ao vincular o repositório).
+- **Shell / comandos manuais:** só depois do deploy aparecer como concluído e o serviço saudável; durante o rollout, instâncias podem estar em versões diferentes do código.
+
+---
+
+## 5. Deploy no Railway (recomendado para vocês)
 
 O Railway suporta deploy direto via Dockerfile:
 
@@ -99,7 +110,7 @@ O Railway suporta deploy direto via Dockerfile:
 
 ---
 
-## 5. Atualizar após mudanças
+## 6. Atualizar após mudanças
 
 ```bash
 git push origin main
@@ -112,7 +123,7 @@ docker compose -f docker-compose.prod.yml up -d --build app
 
 ---
 
-## Troubleshooting
+## 7. Troubleshooting
 
 ```bash
 # Ver logs do app
