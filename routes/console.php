@@ -13,13 +13,13 @@ Artisan::command('inspire', function () {
 | Deploy seed (routes/console.php)
 |--------------------------------------------------------------------------
 |
-| Registrado aqui (além de via diretório app/Console/Commands) para garantir
-| que os comandos existam no namespace "deploy" em qualquer bootstrap Artisan,
-| inclusive quando o discovery de classes falha no ambiente (ex.: hooks Render).
+| Dois closures distintos: compartilhar a mesma instância de Closure em dois
+| Artisan::command pode fazer com que só um nome fique registrado após
+| migrate:fresh / reboot do console em testes.
 |
 */
 
-$runDeploySeed = function (): int {
+Artisan::command('deploy:seed', function (): int {
     if (! config('deployment.seed_on_deploy')) {
         $this->components->warn('Sementes de deploy desabilitadas (SEED_ON_DEPLOY).');
 
@@ -34,10 +34,21 @@ $runDeploySeed = function (): int {
     $this->components->info('Sementes de deploy concluídas.');
 
     return Command::SUCCESS;
-};
+})->purpose('Roda o DatabaseSeeder pós-deploy (db:seed --force).');
 
-Artisan::command('deploy:seed', $runDeploySeed)
-    ->purpose('Roda o DatabaseSeeder pós-deploy (db:seed --force).');
+Artisan::command('app:deploy-seed', function (): int {
+    if (! config('deployment.seed_on_deploy')) {
+        $this->components->warn('Sementes de deploy desabilitadas (SEED_ON_DEPLOY).');
 
-Artisan::command('app:deploy-seed', $runDeploySeed)
-    ->purpose('Mesmo comportamento que deploy:seed (atalho no namespace app).');
+        return Command::SUCCESS;
+    }
+
+    $this->call('db:seed', [
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    $this->components->info('Sementes de deploy concluídas.');
+
+    return Command::SUCCESS;
+})->purpose('Mesmo comportamento que deploy:seed (atalho no namespace app).');

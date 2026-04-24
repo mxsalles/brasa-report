@@ -39,7 +39,9 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        if (! app()->environment('testing') && ! $this->app->runningUnitTests()) {
+        $runningAutomatedTestSuite = defined('APP_RUNNING_TESTS') && APP_RUNNING_TESTS === true;
+
+        if (! $runningAutomatedTestSuite && ! $this->app->runningUnitTests() && ! $this->app->environment('testing')) {
             try {
                 if (Schema::hasTable('areas_monitoradas') && AreaMonitorada::query()->doesntExist()) {
                     Artisan::call('db:seed', [
