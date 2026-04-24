@@ -6,9 +6,9 @@ use Illuminate\Console\Command;
 
 class DeploySeedCommand extends Command
 {
-    protected $signature = 'deploy:seed';
+    protected $signature = 'app:deploy-seed';
 
-    protected $description = 'Roda o DatabaseSeeder (uso em deploy: db:seed --force --no-interaction).';
+    protected $description = 'Roda o DatabaseSeeder (db:seed --force --no-interaction; uso no entrypoint de deploy).';
 
     public function handle(): int
     {

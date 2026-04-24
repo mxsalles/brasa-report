@@ -38,7 +38,7 @@ echo "Executando migrations..."
 php artisan migrate --force --no-interaction
 
 echo "Executando sementes de deploy..."
-php artisan deploy:seed --no-interaction
+php artisan app:deploy-seed --no-interaction
 
 echo "=== Iniciando Nginx + PHP-FPM ==="
 mkdir -p /var/log/supervisor
