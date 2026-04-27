@@ -22,7 +22,7 @@ class StoreIncendioRequest extends FormRequest
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'detectado_em' => ['required', 'date'],
             'nivel_risco' => ['required', 'string', Rule::in(['alto', 'medio', 'baixo'])],
-            'area_id' => ['required', 'uuid', 'exists:areas_monitoradas,id'],
+            'area_id' => ['nullable', 'uuid', 'exists:areas_monitoradas,id'],
             'local_critico_id' => ['nullable', 'uuid', 'exists:locais_criticos,id'],
             'deteccao_satelite_id' => ['nullable', 'uuid', 'exists:deteccoes_satelite,id'],
         ];

@@ -91,7 +91,6 @@ test('test_retorna_incendio_com_relacionamentos', function () {
         ->assertJsonPath('data.id', $incendio->id)
         ->assertJsonStructure([
             'data' => [
-                'area' => ['id', 'nome'],
                 'usuario' => ['id', 'nome', 'email', 'funcao'],
             ],
         ]);
@@ -159,7 +158,7 @@ test('test_status_inicial_sempre_ativo', function () {
         ->assertJsonPath('data.status', 'ativo');
 });
 
-test('test_retorna_422_sem_area_id', function () {
+test('test_registra_incendio_sem_area_id', function () {
     $usuario = Usuario::factory()->brigadista()->create();
 
     $this->postJson('/api/incendios', [
@@ -168,7 +167,8 @@ test('test_retorna_422_sem_area_id', function () {
         'detectado_em' => '2024-03-10T14:00:00Z',
         'nivel_risco' => 'alto',
     ], incendioAuthHeaders($usuario))
-        ->assertUnprocessable();
+        ->assertCreated()
+        ->assertJsonPath('data.area_id', null);
 });
 
 test('test_retorna_422_com_area_inexistente', function () {

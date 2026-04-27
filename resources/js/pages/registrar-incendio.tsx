@@ -10,7 +10,7 @@ import {
     MapPin,
     Send,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { MapComponent } from '@/components/map-component';
@@ -89,13 +89,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type RegistrarIncendioProps = {
-    areaPadrao: { id: string } | null;
-};
-
-export default function RegistrarIncendio({
-    areaPadrao,
-}: RegistrarIncendioProps) {
+export default function RegistrarIncendio() {
     const [coordenadas, setCoordenadas] = useState<{
         lat: number;
         lng: number;
@@ -107,17 +101,8 @@ export default function RegistrarIncendio({
     const [detectadoEm, setDetectadoEm] = useState(() =>
         toDatetimeLocalValue(new Date()),
     );
-    const [areaId] = useState<string | null>(areaPadrao?.id ?? null);
     const [enviando, setEnviando] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (! areaPadrao?.id) {
-            toast.error(
-                'Área padrão "Pantanal Geral" não encontrada. Execute os seeders.',
-            );
-        }
-    }, [areaPadrao?.id]);
 
     const handleMapClick = useCallback((lat: number, lng: number) => {
         setCoordenadas({ lat, lng });
@@ -132,7 +117,7 @@ export default function RegistrarIncendio({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (! coordenadas || ! areaId) {
+        if (! coordenadas) {
             return;
         }
 
@@ -145,7 +130,6 @@ export default function RegistrarIncendio({
                 longitude: coordenadas.lng,
                 nivel_risco: nivelRisco,
                 detectado_em: detectadoIso,
-                area_id: areaId,
             });
 
             toast.success('Incêndio registrado com sucesso');
@@ -197,7 +181,7 @@ export default function RegistrarIncendio({
         }
     };
 
-    const formularioDesabilitado = ! areaId || enviando;
+    const formularioDesabilitado = enviando;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
